@@ -77,7 +77,7 @@
                             @else
                                 <tr>
                                     <td colspan="10" class="text-center text-muted">
-                                        {{ __('No hay datos disponibles') }}
+                                        {{ __('Aún hay datos disponibles') }}
                                     </td>
                                 </tr>
                             @endif
