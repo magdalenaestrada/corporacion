@@ -1,0 +1,110 @@
+/* General styles */
+ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  
+  li {
+    margin-bottom: 0.5rem; /* Adjust spacing between items */
+  }
+  
+  /* Link styles */
+  a {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 0.5rem;
+  }
+  
+ 
+ 
+  /* Sidebar box */
+  .sidebar-box {
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .sidebar-box span {
+    margin-left: 0.75rem; /* Adjust spacing from icon to text */
+  }
+  
+
+  
+  a.dark.text-white {
+    color: #ffffff; /* White color for dark mode */
+  }
+  
+
+
+
+
+
+.sidebar {
+    height: 100%;
+    width: 16rem; /* Adjust width as needed */
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    color: white;
+        
+    background-color: #0b2942; /* Adjust background color */
+    transition: transform 0.3s ease-in-out;
+}
+
+.title-sidebar{
+  font-weight: 700;
+  color: rgb(250, 255, 255) !important;
+  font-size: 25px;
+}
+  
+.sidebar-in {
+    height: 100%;
+    padding: 1rem; /* Adjust padding as needed */
+    overflow-y: auto;
+}
+  
+  .sidebar-img{
+    width: 50px;
+    height: 50px;
+  }
+  
+
+
+
+
+  
+  
+ 
+  
+
+
+  
+  .sidebar-box {
+    color: rgb(223, 227, 255);
+   
+  }
+
+
+
+  .flex-1 {
+    flex: 1; /* Take up remaining space */
+     /* Padding for main content */
+    margin-left: 16rem; /* Adjust this value to match the sidebar width */
+  
+  }
+  
+
+  .container{
+    padding: 30px;
+  }
+
+
+  .innova-t{
+    font-size: 50px;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  }
