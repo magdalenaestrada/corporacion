@@ -221,10 +221,10 @@
       <table class="kv">
         <tr><td class="label">Razón social</td><td class="value">INNOVA CORPORATIVO S.A.</td></tr>
         <tr><td class="label">RUC</td><td class="value">20613318021</td></tr>
-        <tr><td class="label">Representante</td><td class="value">{{ $recepcion->usuario->name ?? '__________' }}</td></tr>
+        <tr><td class="label">Representante</td><td class="value">{{ $recepcion->representante->name ?? '__________' }}</td></tr>
         <tr>
           <td class="label">Usuario (ID)</td>
-          <td class="value">{{ $recepcion->usuario?->email ? explode('@',$recepcion->usuario->email)[0] : '__________' }}</td>
+          <td class="value">{{ $recepcion->representante?->email ? explode('@',$recepcion->representante->email)[0] : '__________' }}</td>
         </tr>
         <tr><td class="label">Domicilio</td><td class="value">Carretera Pampa de Chauchilla km 1, Fundo Santa Cirila, Ica - Nasca</td></tr>
       </table>
@@ -263,7 +263,7 @@
 
    <p>5. Ticket de balanza — N.º <b>{{ $peso->NroSalida ?? '—' }}</b>;
       Bruto/Tara/Neto: <b>{{ $peso->Bruto ?? '—' }}</b>/<b>{{ $peso->Tara ?? '—' }}</b>/<b>{{ $peso->Neto ?? '—' }}</b>;
-      emitido por <b>{{ $recepcion->usuario->name ?? '__________' }}</b>.
+      emitido por <b>{{ $recepcion->creador->name ?? '__________' }}</b>.
     </p>
   </div>
 

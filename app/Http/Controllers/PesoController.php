@@ -8,48 +8,50 @@ use Illuminate\Http\Request;
 use App\Models\RecepcionIngreso;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
-
+use App\Models\User;
 class PesoController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
 
-    public function recepcionar(string $nro_salida)
-    {
-        $peso = Peso::where('NroSalida', $nro_salida)->firstOrFail();
+        public function recepcionar(string $nro_salida)
+        {
+            $peso = Peso::where('NroSalida', $nro_salida)->firstOrFail();
 
-        // Si ya existe recepción, puedes redirigir al show (opcional)
-        // if ($existente = RecepcionIngreso::where('nro_salida', $nro_salida)->first()) {
-        //     return redirect()->route('recepciones-ingreso.show', $existente)
-        //         ->with('info', 'Ya existe una recepción para este N° de salida.');
-        // }
+            $prefill = [
+                'nro_salida'      => $peso->NroSalida,
+                'dni_conductor'   => $peso->DNIConductor ?? null,
+                'datos_conductor' => $peso->Conductor ?? null,
+            ];
 
-        $prefill = [
-            'nro_salida'      => $peso->NroSalida,
-            'dni_conductor'   => $peso->DNIConductor ?? null,
-            'datos_conductor' => $peso->Conductor ?? null,
-        ];
+            $pesoInfo = [
+                'fechas'        => $peso->Fechas ?? null,
+                'horas'         => $peso->Horas ?? null,
+                'bruto'         => $peso->Bruto ?? null,
+                'tara'          => $peso->Tara ?? null,
+                'neto'          => $peso->Neto ?? null,
+                'producto'      => $peso->Producto ?? null,
+                'placa'         => $peso->Placa ?? null,
+                'carreta'       => $peso->Carreta ?? null,
+                'destino'       => $peso->destino ?? null,
+                'origen'        => $peso->origen ?? null,
+                'guia'          => $peso->guia ?? null,
+                'guiat'         => $peso->guiat ?? null,
+                'razon_social'  => $peso->RazonSocial ?? null,
+                'conductor'     => $peso->Conductor ?? null,
+            ];
 
-        $pesoInfo = [
-            'fechas'   => $peso->Fechas ?? null,
-            'horas'    => $peso->Horas ?? null,
-            'bruto'    => $peso->Bruto ?? null,
-            'tara'     => $peso->Tara ?? null,
-            'neto'     => $peso->Neto ?? null,
-            'producto' => $peso->Producto ?? null,
-            'placa'    => $peso->Placa ?? null,
-            'carreta'  => $peso->Carreta ?? null,
-            'destino'  => $peso->destino ?? null,
-            'origen'   => $peso->origen ?? null,
-            'guia'     => $peso->guia ?? null,
-            'guiat'    => $peso->guiat ?? null,
-            'razon_social' => $peso->RazonSocial ?? null,
-            'conductor'    => $peso->Conductor   ?? null,
-        ];
+            // ✅ REPRESENTANTES PARA EL SELECT
+            $REP_IDS = [23, 24, 32, 34, 38];
 
-        return view('recepciones_ingreso.create', compact('prefill', 'pesoInfo'));
-    }
+            $representantes = User::query()
+                ->whereIn('id', $REP_IDS)
+                ->orderBy('name')
+                ->get(['id', 'name']);
+
+            return view('recepciones_ingreso.create', compact('prefill', 'pesoInfo', 'representantes'));
+        }
 
 
     public function __construct()

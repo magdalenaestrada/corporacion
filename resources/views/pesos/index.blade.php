@@ -169,4 +169,81 @@
             });
         </script>
     @endpush
+    @push('js')
+<script>
+(function () {
+  // SweetAlert2 requerido
+  if (typeof Swal === 'undefined') return;
+
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+  document.addEventListener('click', async function (e) {
+    const btn = e.target.closest('.js-del-recepcion');
+    if (!btn) return;
+
+    const url = btn.dataset.url;
+    const nro = btn.dataset.nro;
+
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: '¡Esta acción no se puede deshacer!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#0d6efd',
+      reverseButtons: true
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'X-CSRF-TOKEN': csrf,
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.message || 'No se pudo eliminar.');
+      }
+
+      // Mensaje éxito
+      await Swal.fire({
+        title: 'Eliminado',
+        text: 'La recepción fue eliminada correctamente.',
+        icon: 'success',
+        timer: 1200,
+        showConfirmButton: false
+      });
+
+      // Reemplazar botones -> vuelve "Recepción"
+      const cont = document.getElementById('acciones-' + nro);
+      if (cont) {
+        const urlRecepcionar = @json(route('pesos.recepcionar', '___NRO___'));
+        cont.innerHTML = `
+          <a href="${urlRecepcionar.replace('___NRO___', nro)}"
+             class="btn btn-primary btn-xs">
+            📥 Recepción
+          </a>
+        `;
+      }
+
+    } catch (err) {
+      Swal.fire({
+        title: 'Error',
+        text: err.message || 'Ocurrió un error eliminando.',
+        icon: 'error'
+      });
+    }
+  });
+})();
+</script>
+@endpush
 @endsection

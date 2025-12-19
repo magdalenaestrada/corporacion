@@ -17,32 +17,40 @@
         <td>{{ $peso->destino }}</td>
         <td>{{ $peso->origen }}</td>
 
-        <td class="text-nowrap">
-            {{-- VER --}}
-            <a href="{{ route('pesos.show', $peso->NroSalida) }}" class="btn btn-secondary btn-xs">
-                Ver
-            </a>
+            <td class="text-nowrap" id="acciones-{{ $peso->NroSalida }}">
+                {{-- VER --}}
+                <a href="{{ route('pesos.show', $peso->NroSalida) }}" class="btn btn-secondary btn-xs">
+                    Ver
+                </a>
 
-            @if ($tieneRecepcion)
-                <a href="{{ route('recepciones-ingreso.acta.html', $peso->NroSalida) }}"
+                @if ($tieneRecepcion)
+                    <a href="{{ route('recepciones-ingreso.acta.html', $peso->NroSalida) }}"
                     class="btn btn-outline-dark btn-xs" target="_blank" rel="noopener">
-                    🖨️ Acta
-                </a>
-            @endif
+                        🖨️ Acta
+                    </a>
+                @endif
 
-            @if (!$tieneRecepcion && $fechaOk && $horaOk)
-                <a href="{{ route('pesos.recepcionar', $peso->NroSalida) }}" class="btn btn-primary btn-xs">
-                    📥 Recepción
-                </a>
-            @endif
+                @if (!$tieneRecepcion && $fechaOk && $horaOk)
+                    <a href="{{ route('pesos.recepcionar', $peso->NroSalida) }}" class="btn btn-primary btn-xs">
+                        📥 Recepción
+                    </a>
+                @endif
 
-            @if ($recepcionId)
-                <a href="{{ route('recepciones-ingreso.edit', $recepcionId) }}"
+                @if ($recepcionId)
+                    <a href="{{ route('recepciones-ingreso.edit', $recepcionId) }}"
                     class="btn btn-outline-secondary btn-xs">
-                    ✏️ Editar
-                </a>
-            @endif
-        </td>
+                        ✏️ Editar
+                    </a>
+
+                    {{-- ELIMINAR (AJAX + Swal) --}}
+                    <button type="button"
+                            class="btn btn-outline-danger btn-xs js-del-recepcion"
+                            data-url="{{ route('recepciones-ingreso.destroy', $recepcionId) }}"
+                            data-nro="{{ $peso->NroSalida }}">
+                        🗑️ Eliminar
+                    </button>
+                @endif
+            </td>
     </tr>
 @empty
     <tr>

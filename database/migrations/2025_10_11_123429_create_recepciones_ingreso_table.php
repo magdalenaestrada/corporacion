@@ -25,8 +25,14 @@ return new class extends Migration {
         $table->string('datos_conductor')->nullable();
 
         $table->text('observacion')->nullable();
-        $table->json('extras')->nullable();
+        $table->json(column: 'extras')->nullable();
 
+        $table->foreignId('representante_user_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete()
+                ->cascadeOnUpdate();
+                
         // ← quién lo creó (FK a users.id)
         $table->foreignId('creado_por')
             ->nullable()

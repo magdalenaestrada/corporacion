@@ -504,7 +504,7 @@
                     
                 <div class="row mt-4">
                     <div class="form-group col-md-4">
-                        <label for="masomenos" class="text-muted">{{ __('FALTA (-) Y EXEDE  (+)') }}</label>
+                        <label for="masomenos" class="text-muted">{{ __('FALTA (-) Y EXCEDE  (+)') }}</label>
                         <input type="text" class="form-control" name="masomenos" readonly >
                     </div>
                     <div class="form-group col-md-4">

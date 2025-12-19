@@ -99,7 +99,37 @@
 
 <div class="card">
   <div class="card-body">
-   
+   {{-- REPRESENTANTE EMPRESA RECEPTORA --}}
+<div class="row g-2 mb-3">
+  <div class="col-12 col-md-4">
+    <label class="form-label text-success mb-1">
+      REPRESENTANTE EMPRESA RECEPTORA <span class="text-danger">*</span>
+    </label>
+
+    <select
+      name="representante_user_id"
+      class="form-select form-select-sm @error('representante_user_id') is-invalid @enderror"
+      required
+    >
+      <option value="">-- Seleccione representante --</option>
+
+      @foreach($representantes as $rep)
+        <option
+          value="{{ $rep->id }}"
+          {{ old('representante_user_id') == $rep->id ? 'selected' : '' }}
+        >
+          {{ $rep->name }}
+        </option>
+      @endforeach
+    </select>
+
+    @error('representante_user_id')
+      <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+  </div>
+</div>
+
+<hr class="my-3">
     <div class="row g-2 align-items-end">
       <div class="col-12 col-md-4">
         <label for="nro_ruc" class="form-label text-success mb-1">RUC</label>

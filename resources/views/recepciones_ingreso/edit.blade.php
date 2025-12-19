@@ -116,7 +116,39 @@
 
   <div class="card">
     <div class="card-body">
+{{-- REPRESENTANTE (EMPRESA RECEPTORA) --}}
+<div class="row g-2 align-items-end">
+  <div class="col-12 col-md-6">
+    <label class="form-label text-success mb-1">REPRESENTANTE (EMPRESA RECEPTORA)</label>
 
+    <select id="repSelect" name="representante_user_id"
+            class="form-select form-select-sm @error('representante_user_id') is-invalid @enderror">
+      <option value="">-- Selecciona --</option>
+
+      @foreach($representantes as $u)
+        @php $dni = $u->email ? explode('@', $u->email)[0] : ''; @endphp
+        <option value="{{ $u->id }}"
+                data-dni="{{ $dni }}"
+                @selected(old('representante_user_id', $item->representante_user_id) == $u->id)>
+          {{ $u->name }}
+        </option>
+      @endforeach
+    </select>
+
+    @error('representante_user_id')
+      <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+  </div>
+
+  <div class="col-12 col-md-6">
+    <label class="form-label text-muted mb-1">USUARIO (ID)</label>
+    <input type="text" id="repDni"
+           class="form-control form-control-sm bg-light"
+           value="__________"
+           readonly>
+  </div>
+</div>
+     <hr class="my-3">
       {{-- RUC --}}
       <div class="row g-2 align-items-end">
         <div class="col-12 col-md-4">
@@ -144,8 +176,9 @@
         </div>
       </div>
 
-      <hr class="my-3">
+ 
 
+<hr class="my-3">
       {{-- CONDUCTOR --}}
       <div class="row g-2 align-items-end">
         <div class="col-12 col-md-3">
@@ -233,7 +266,7 @@
       <button type="submit" class="btn btn-secondary" name="redirect" value="print" id="btn-save-print">
         Guardar e imprimir
       </button>
-      <button type="submit" class="btn btn-primary" id="btn-save">Guardar cambios</button>
+      
     </div>
   </div>
 
@@ -243,6 +276,20 @@
 
 @push('js')
 <script>
+   const repSelect = document.getElementById('repSelect');
+  const repDniInp = document.getElementById('repDni');
+
+  function syncRepresentante() {
+    if (!repSelect || !repDniInp) return;
+    const opt = repSelect.options[repSelect.selectedIndex];
+    repDniInp.value = (opt && opt.dataset && opt.dataset.dni) ? opt.dataset.dni : '__________';
+  }
+
+  if (repSelect) {
+    repSelect.addEventListener('change', syncRepresentante);
+    syncRepresentante(); // inicial (para que salga el guardado)
+  }
+
 (function(){
   const chk = document.getElementById('same_as_driver');
 
