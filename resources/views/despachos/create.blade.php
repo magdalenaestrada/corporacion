@@ -306,14 +306,23 @@
                         $('#totalTMH').val(formatNumber(totalTMH));
                         let pesoblending = toNum('{{ $blending->pesoblending }}'); if(isNaN(pesoblending)) pesoblending = 0;
                         const diferencia = totalTMH - pesoblending;
-                        $('input[name="masomenos"]').val(formatNumber(diferencia));
+                        $('input[name="masomenos"]').val(formatMasomenos(diferencia));
                     }
 
                     // Deshabilitar / habilitar opción de select por valor exacto
                     function disableOption(value, disabled){
                         $('#NroSalida option').filter(function(){ return $(this).val() === value; }).prop('disabled', !!disabled);
                     }
+                    function formatMasomenos(n){
+                    const x = Number(n);
+                    if (Number.isNaN(x)) return '';
 
+                    // Convertir de KG a TMH
+                    const tmh = x / 1000;
+
+                    // Mostrar con 2 decimales (1073.55)
+                    return tmh.toFixed(3);
+                    }
                     // Renderizar fila en tabla
                     function renderFila(data){
                         // data: { uid, NroSalida, precinto, guia, bruto, tara, neto, tracto, carreta, guia_transporte, ruc_empresa, razon_social, licencia, conductor }

@@ -35,4 +35,5 @@ class Fina extends Model
     {
         return $this->hasMany(Liquidacion::class);
     }
+    
 }
