@@ -187,19 +187,31 @@
   </div>
 
   <div class="title">ACTA DE ENTREGA Y RECEPCIÓN DE CONCENTRADO DE MINERALES</div>
+@php
+  use Carbon\Carbon;
 
+  // Hora SOLO (evita el 1899-12-30)
+  $horaSolo = !empty($peso->Horas) ? Carbon::parse($peso->Horas)->format('H:i') : '—';
+
+  // Fecha SOLO (día/mes/año) desde "Fechas"
+  $dtFecha = !empty($peso->Fechas) ? Carbon::parse($peso->Fechas) : null;
+
+  $dia  = $dtFecha ? $dtFecha->format('d') : '—';
+  $mes  = $dtFecha ? ucfirst($dtFecha->locale('es')->translatedFormat('F')) : '—';
+  $anio = $dtFecha ? $dtFecha->format('Y') : '—';
+@endphp
   {{-- Intro --}}
-  <div class="box" style="margin-bottom:10px;">
-    <p>En la localidad de <b>Nasca</b>, siendo las <b>{{ $recepcion->created_at->format('H:i') }}</b> horas del día
-      <b>{{ $recepcion->created_at->format('d') }}</b> de
-      <b>{{ ucfirst($recepcion->created_at->translatedFormat('F')) }}</b> del
-      <b>{{ $recepcion->created_at->format('Y') }}</b>, se extiende la presente
-     <b>ACTA DE ENTREGA Y RECEPCIÓN DE CONCENTRADO DE MINERALES</b>, con la finalidad de dejar constancia de la entrega,
-      traslado, recepción y verificación del concentrado, de acuerdo con la normativa vigente que regula su 
-      comercialización y transporte.</p>
-      
-  </div>
-
+<div class="box" style="margin-bottom:10px;">
+  <p>
+    En la localidad de <b>Nasca</b>, siendo las <b>{{ $horaSolo }}</b> horas del día
+    <b>{{ $dia }}</b> de
+    <b>{{ $mes }}</b> del
+    <b>{{ $anio }}</b>, se extiende la presente
+    <b>ACTA DE ENTREGA Y RECEPCIÓN DE CONCENTRADO DE MINERALES</b>, con la finalidad de dejar constancia de la entrega,
+    traslado, recepción y verificación del concentrado, de acuerdo con la normativa vigente que regula su
+    comercialización y transporte.
+  </p>
+</div>
   {{-- I. PARTES INTERVINIENTES --}}
   <div class="section-title">I. Partes intervinientes</div>
   <div class="grid-2 partes">
@@ -243,19 +255,14 @@
       <b>{{ $recepcion->documento_encargado ?: '—' }}</b> realizó la entrega física del concentrado.</p>
 
     <p>3. Documentos de traslado:</p>
-    <ul style="margin-left:16px;">
-      <li><span class="label">Guia Remitente</span> N.º <b>{{ $peso->guia ?: '—' }}</b>,
-        emitida por <b><span style="text-transform:uppercase;">{{ $recepcion->documento_ruc ?: '—' }}</span></b>
-        (RUC <b>{{ $recepcion->nro_ruc ?: '—' }}</b>).
-      </li>
-      <li><span class="label">Guia Transportista</span> N.º <b>{{ $peso->guiat ?: '—' }}</b>,
-        emitida por <b><span style="text-transform:uppercase;">{{ $recepcion->documento_ruc ?: '—' }}</span></b>
-        (RUC <b>{{ $recepcion->nro_ruc ?: '—' }}</b>).
-      </li>
+      <span class="label">Guia Remitente</span> N.º <b>{{ $peso->guia ?: '—' }}.</b></p>
+
+      <span class="label">Guia Transportista</span> N.º <b>{{ $peso->guiat ?: '—' }}</b>
+
     </ul>
 
     <p style="margin-top:6px;">4. El transporte se realizó en la unidad vehicular placa N.º
-      <b>{{ $peso->Placa ?: '—' }}</b>, conducida por <b>{{ $recepcion->datos_conductor ?: '—' }}</b>
+      <b>{{ $peso->Placa ?: '—' }}</b>, conducido por <b>{{ $recepcion->datos_conductor ?: '—' }}</b>
       (DNI: <b>{{ $recepcion->dni_conductor ?: '—' }}</b>).</p>
 
      {{--<p>5. El concentrado fue transportado en sacos/lonas sellados y rotulados, identificados con el número de lote y
@@ -263,7 +270,7 @@
 
    <p>5. Ticket de balanza — N.º <b>{{ $peso->NroSalida ?? '—' }}</b>;
       Bruto/Tara/Neto: <b>{{ $peso->Bruto ?? '—' }}</b>/<b>{{ $peso->Tara ?? '—' }}</b>/<b>{{ $peso->Neto ?? '—' }}</b>;
-      emitido por <b>{{ $recepcion->creador->name ?? '__________' }}</b>.
+      emitido por <b>{{ $peso->Operadors ?: '—' }}
     </p>
   </div>
 
