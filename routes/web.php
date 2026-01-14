@@ -150,7 +150,10 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/recepciones-ingreso/{nro_salida}/acta', [RecepcionIngresoController::class, 'actaHtml'])->name('recepciones-ingreso.acta.html');
 
     Route::resource('estados_mineral', EstadoMineralController::class);
-
+    Route::resource('humedad', HumedadController::class);
+    Route::get('humedad/{id}/informe', [HumedadController::class, 'informe'])
+    ->name('humedad.informe');
+    Route::get('humedad/pesos/buscar', [HumedadController::class, 'buscarPesos'])->name('humedad.pesos.buscar');
 });
 
 

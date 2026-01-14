@@ -180,9 +180,7 @@
       </div>
     </div>
     <div class="meta">
-      <span>Ticket</span><strong># {{ $peso->NroSalida ?? '—' }}</strong>
-      <span>•</span>
-      <span>Generado: {{ $recepcion->created_at->format('d/m/Y H:i') }}</span>
+      <span>Acta</span><strong># {{ $recepcion->id }}</strong>
     </div>
   </div>
 
@@ -219,9 +217,9 @@
     <div class="box">
       <div class="chip" style="margin-bottom:4px;">Empresa Entregante</div>
       <table class="kv">
-        <tr><td class="label">Doc. RUC</td><td class="value">{{ $recepcion->documento_ruc ?: '—' }}</td></tr>
+        <tr><td class="label">RAZON SOCIAL</td><td class="value">{{ $recepcion->documento_ruc ?: '—' }}</td></tr>
         <tr><td class="label">RUC</td><td class="value">{{ $recepcion->nro_ruc ?: '—' }}</td></tr>
-        <tr><td class="label">Representante</td><td class="value">{{ $recepcion->datos_encargado ?: '—' }}</td></tr>
+        <tr><td class="label">ENCARGADO</td><td class="value">{{ $recepcion->datos_encargado ?: '—' }}</td></tr>
         <tr><td class="label">DNI</td><td class="value">{{ $recepcion->documento_encargado ?: '—' }}</td></tr>
         <tr><td class="label">Domicilio</td><td class="value">{{ $recepcion->domicilio_encargado ?: '—' }}</td></tr>
       </table>
@@ -231,14 +229,15 @@
     <div class="box">
       <div class="chip" style="margin-bottom:4px;">Empresa Receptora</div>
       <table class="kv">
-        <tr><td class="label">Razón social</td><td class="value">INNOVA CORPORATIVO S.A.</td></tr>
+        <tr><td class="label">RAZON SOCIAL</td><td class="value">INNOVA CORPORATIVO S.A.</td></tr>
         <tr><td class="label">RUC</td><td class="value">20613318021</td></tr>
-        <tr><td class="label">Representante</td><td class="value">{{ $recepcion->representante->name ?? '__________' }}</td></tr>
+        <tr><td class="label">ENCARGADO</td><td class="value">{{ $recepcion->representante->name ?? '__________' }}</td></tr>
         <tr>
           <td class="label">Usuario (ID)</td>
           <td class="value">{{ $recepcion->representante?->email ? explode('@',$recepcion->representante->email)[0] : '__________' }}</td>
         </tr>
-        <tr><td class="label">Domicilio</td><td class="value">Carretera Pampa de Chauchilla km 1, Fundo Santa Cirila, Ica - Nasca</td></tr>
+        <tr><td class="label">Domicilio</td><td class="value">KM. 1 FND. CAR. PAMPA DE CHAUCHILLA FUNDO SANTA CIRILA
+          PAMPA DE CHAUCHILLA (LOZA 2) - VISTA ALEGRE - NASCA - ICA</td></tr>
       </table>
     </div>
   </div>
@@ -249,9 +248,9 @@
   <div class="section-title">II. Condiciones de entrega y transporte</div>
   <div class="box">
     <p>1. La entrega del concentrado con origen de <b>{{ $peso->origen ?: '—' }}</b> , se realizó en el punto de recepción ubicado en:
-      <b>Carretera Pampa de Chauchilla km 1, Fundo Santa Cirila, Ica - Nasca.</b> - <b>{{ $peso->destino ?: '—' }}</b></p>
+      <b>KM. 1 FND. CAR. PAMPA DE CHAUCHILLA FUNDO SANTA CIRILAPAMPA DE CHAUCHILLA (LOZA 2) - VISTA ALEGRE - NASCA - ICA</b> </p>
 
-    <p>2. El trabajador de la empresa <b>{{ $recepcion->datos_encargado ?: '—' }}</b> con DNI
+    <p>2. El trabajador de la empresa <b>{{ $recepcion->documento_ruc ?: '—' }}</b> - <b>{{ $recepcion->datos_encargado ?: '—' }}</b> con DNI
       <b>{{ $recepcion->documento_encargado ?: '—' }}</b> realizó la entrega física del concentrado.</p>
 
     <p>3. Documentos de traslado:</p>
@@ -269,8 +268,7 @@
       procedencia, garantizando su integridad hasta su recepción en planta.</p>--}}
 
    <p>5. Ticket de balanza — N.º <b>{{ $peso->NroSalida ?? '—' }}</b>;
-      Bruto/Tara/Neto: <b>{{ $peso->Bruto ?? '—' }}</b>/<b>{{ $peso->Tara ?? '—' }}</b>/<b>{{ $peso->Neto ?? '—' }}</b>;
-      emitido por <b>{{ $peso->Operadors ?: '—' }}
+      Bruto = <b>{{ $peso->Bruto ?? '—' }}</b>Kg - Tara = <b>{{ $peso->Tara ?? '—' }}</b>Kg - Neto = <b>{{ $peso->Neto ?? '—' }}</b>Kg
     </p>
   </div>
 
@@ -292,12 +290,14 @@
 
   {{-- PIE Y FIRMAS --}}
   <div class="box" style="margin-top:15px;">
-    <p>Firmado en la ciudad de <b>Nasca</b>, a los <b>{{ $recepcion->created_at->format('d') }}</b> días del mes de
-      <b>{{ ucfirst($recepcion->created_at->translatedFormat('F')) }}</b> de
-      <b>{{ $recepcion->created_at->format('Y') }}</b>.</p>
+   <p>
+  Firmado en la ciudad de <b>Nasca</b>, a los <b>{{ $dia }}</b> días del mes de
+  <b>{{ $mes }}</b> de
+  <b>{{ $anio }}</b>.
+</p>
  <div class="signs">
        <div class="sign">
-        <div class="line">REPRESENTANTE</div>
+        <div class="line">ENCARGADO DE ENTREGA</div>
         <div class="mini">{{ $recepcion->datos_encargado?: '—' }}</div>
         <div class="mini">{{ $recepcion->documento_encargado ?: '—' }}</div>
         
