@@ -140,20 +140,24 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/reportes/flujo', [ReporteController::class, 'flujos'])->name('reportes.flujos');
     Route::resource('recepciones-ingreso', RecepcionIngresoController::class);
 
-    Route::resource('humedad', HumedadController::class);
+
 
     Route::get('/pesos/export/excel', [PesoController::class, 'exportExcel'])
         ->name('pesos.export.excel');
-
+    Route::resource('humedad', HumedadController::class);
 
     Route::get('pesos/{nro_salida}/recepcionar', [PesoController::class, 'recepcionar'])->name('pesos.recepcionar');
     Route::get('/recepciones-ingreso/{nro_salida}/acta', [RecepcionIngresoController::class, 'actaHtml'])->name('recepciones-ingreso.acta.html');
 
     Route::resource('estados_mineral', EstadoMineralController::class);
-    Route::resource('humedad', HumedadController::class);
+    
     Route::get('humedad/{id}/informe', [HumedadController::class, 'informe'])
     ->name('humedad.informe');
-    Route::get('humedad/pesos/buscar', [HumedadController::class, 'buscarPesos'])->name('humedad.pesos.buscar');
+    Route::get('/humedad/export', [HumedadController::class, 'export'])->name('humedad.export');
+
+    Route::get('humedad/pesos/buscar',
+     [HumedadController::class, 'buscarPesos'])->name('humedad.pesos.buscar');
+         
 });
 
 

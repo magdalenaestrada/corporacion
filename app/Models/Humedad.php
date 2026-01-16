@@ -21,6 +21,7 @@ class Humedad extends Model
         'periodo_fin',
         'humedad',
         'observaciones',
+          'cliente_detalle',
     ];
 
     // ✅ IMPORTANTE: para que las fechas sean Carbon y puedas usar ->format('Y-m-d')
@@ -29,7 +30,7 @@ class Humedad extends Model
         'fecha_emision'   => 'date',
         'periodo_inicio'  => 'date',
         'periodo_fin'     => 'date',
-        'humedad'         => 'decimal:2',
+        'humedad'         => 'decimal:3',
     ];
 
     public function mineral()

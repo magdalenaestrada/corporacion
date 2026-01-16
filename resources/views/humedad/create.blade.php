@@ -50,8 +50,17 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="col-md-1">
+                        <label class="text-muted">Lote</label>
+                        <input type="text"
+                              name="cliente_detalle"
+                              class="form-control"
+                              maxlength="50"
+                              value="{{ old('cliente_detalle') }}"
+                              placeholder="">
+                    </div>
 
-                    <div class="col-md-2">
+                    <div class="col-md-1">
                         <label class="text-muted">Fecha recepción</label>
                         <input type="date" name="fecha_recepcion" class="form-control" value="{{ old('fecha_recepcion') }}">
                     </div>
@@ -75,7 +84,7 @@
 
                     <div class="col-md-2">
                         <label class="text-muted">Humedad</label>
-                        <input type="number" step="0.01" name="humedad" class="form-control" value="{{ old('humedad') }}">
+                        <input type="number" step="0.001" name="humedad" class="form-control" value="{{ old('humedad') }}">
                     </div>
 
                     <div class="col-md-6">

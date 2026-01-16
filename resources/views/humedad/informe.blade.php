@@ -32,7 +32,10 @@
       width: 210mm;
       min-height: 297mm;
       background:#fff;
+
+      /* ✅ En pantalla: padding normal */
       padding: 18mm 16mm;
+
       box-shadow: 0 0 8px rgba(0,0,0,.15);
       box-sizing:border-box;
       overflow:hidden;
@@ -45,13 +48,19 @@
         width:auto;
         min-height:auto;
         box-shadow:none;
-        padding:0;
+
+        /* ✅ En impresión: deja espacio arriba para papel membretado */
+        padding: 30mm 16mm 18mm 16mm;
       }
+
       .no-print{ display:none !important; }
+
+      /* ✅ Ocultar cabecera y marca de agua SOLO al imprimir */
+      .only-screen{ display:none !important; }
     }
 
     /* =========================
-       MARCA DE AGUA (CLAVE)
+       MARCA DE AGUA (SOLO PANTALLA)
     ========================== */
     .watermark{
       position: fixed;
@@ -95,7 +104,7 @@
     }
 
     /* =========================
-       HEADER
+       HEADER (SOLO PANTALLA)
     ========================== */
     .brand-wrap{
       display:flex;
@@ -208,20 +217,19 @@
 <div class="preview-wrap">
   <div class="sheet">
 
-    <!-- MARCA DE AGUA -->
-    <div class="watermark">
+    <!-- ✅ SOLO PANTALLA: marca de agua (en impresión se oculta por .only-screen) -->
+    <div class="watermark only-screen">
       <img src="{{ asset('images/innovalogo.png') }}" alt="Marca de agua">
     </div>
 
-    <!-- CONTENIDO -->
     <div class="content">
 
       <div class="no-print">
         <button class="btn-print" onclick="window.print()">Imprimir</button>
       </div>
 
-      <!-- HEADER -->
-      <div class="brand-wrap">
+      <!-- ✅ SOLO PANTALLA: cabecera (en impresión se oculta por .only-screen) -->
+      <div class="brand-wrap only-screen">
         <div class="brand-left">
           <div class="logo-box">
             <img src="{{ asset('images/innovalogo.png') }}" class="brand-logo">
@@ -233,18 +241,23 @@
         </div>
         <div class="brand-right">
           <strong>INFORME DE ENSAYO</strong><br>
-          N.° {{  $humedad->id }}
+          N.° {{ $humedad->id }}
         </div>
       </div>
 
-      <div class="title">INFORME DE ENSAYO N.° {{ $humedad->codigo ?? $humedad->id }}</div>
+      <div class="title">
+        INFORME DE ENSAYO N.° {{ $humedad->codigo ?? $humedad->id }}
+      </div>
 
       <!-- 1. DATOS -->
       <div class="section">
         <div class="section-title">1. DATOS</div><br>
         <div class="line">
           <div class="label">1.1. CLIENTE</div>
-          <div class="value">: {{ $humedad->cliente->razon_social ?? '' }}</div><br>
+          <div class="value">
+            : {{ $humedad->cliente->razon_social ?? '' }}
+            {{ !empty($humedad->cliente_detalle) ? ' - '.$humedad->cliente_detalle : '' }}
+          </div>
         </div>
       </div>
 
@@ -257,8 +270,7 @@
         <div class="line"><div class="label">2.3. FECHA DE RECEPCIÓN</div><div class="value">: {{ optional($humedad->fecha_recepcion)->format('d-m-Y') }}</div></div>
         <div class="line"><div class="label">2.4. PERIODO DE ENSAYO</div><div class="value">: {{ optional($humedad->periodo_inicio)->format('d-m-Y') }} AL {{ optional($humedad->periodo_fin)->format('d-m-Y') }}</div></div>
         <div class="line"><div class="label">2.5. FECHA DE EMISIÓN</div><div class="value">: {{ optional($humedad->fecha_emision)->format('d-m-Y') }}</div></div>
-        <div class="line"><div class="label">2.6. FECHA Y HORA DEL MUESTREO: </div><div class="value">: MOMENTO PRECISO DE MUESTREO NATURAL </div></div>
-
+        <div class="line"><div class="label">2.6. FECHA Y HORA DEL MUESTREO</div><div class="value">: MOMENTO PRECISO DE LA RECEPCIÓN DE LA MUESTRA</div></div>
       </div>
 
       <!-- 3. ENSAYO -->
@@ -266,14 +278,17 @@
         <div class="section-title">3. ENSAYO SOLICITADO: METODOLOGÍA APLICADA</div><br>
 
         <table style="width:75%; margin:0 auto;">
-          <tr><th>ENSAYO</th><th>METODO</th></tr>
+          <tr><th>ENSAYO</th><th>MÉTODO</th></tr>
           <tr>
             <td class="center bold">HUMEDAD</td>
-            <td>METODO DE SECADO HASTA MASA CONSTANTE POR TERMOGRAVIMETRIA, METODO VALIDADO CON NTP-ISO 10251.</td>
+            <td>
+              MÉTODO DE SECADO HASTA MASA CONSTANTE POR TERMOGRAVIMETRÍA,
+              MÉTODO VALIDADO CON NTP-ISO 10251.
+            </td>
           </tr>
         </table>
 
-        <div class="section-title " style="margin-top:10px;">3.1. DATOS DEL MÉTODO</div>
+        <div class="section-title" style="margin-top:10px;">3.1. DATOS DEL MÉTODO</div>
 
         <table style="width:50%; margin:0 auto; text-align:center;">
           <tr><th>PARÁMETRO</th><th>UNIDAD</th><th>LMC</th></tr>
@@ -293,15 +308,21 @@
           <tr><td class="center bold">H2O %</td></tr>
           <tr>
             <td class="center bold">
-              {{ $humedad->cliente->razon_social ?? '' }}<br>
-              <span style="font-weight:normal;">W = {{ number_format($pesoTotal ?? 0,0,'.',',') }}</span>
+              {{ $humedad->cliente->razon_social ?? '' }}
+              {{ !empty($humedad->cliente_detalle) ? ' - '.$humedad->cliente_detalle : '' }}<br>
+              <span style="font-weight:normal;">
+                W = {{ number_format($pesoTotal ?? 0, 0, '.', ',') }}
+              </span>
             </td>
-            <td class="center bold" style="font-size:12px;">{{ $humedad->humedad }}</td>
+            <td class="center bold" style="font-size:12px;">
+              {{ $humedad->humedad }}
+            </td>
           </tr>
         </table>
 
         <div class="section" style="margin-top:10px;">
-          <span class="bold">OBSERVACIONES:</span> {{ $humedad->observaciones ?? '' }}
+          <span class="bold">OBSERVACIONES:</span>
+          {{ $humedad->observaciones ?? 'SIN OBSERVACIONES' }}
         </div>
       </div>
 

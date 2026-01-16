@@ -52,7 +52,15 @@
                             @endforeach
                         </select>
                     </div>
-
+                    <div class="col-md-1">
+                        <label class="text-muted">Lote</label>
+                        <input type="text"
+                            name="cliente_detalle"
+                            class="form-control"
+                            maxlength="50"
+                            value="{{ old('cliente_detalle', $humedad->cliente_detalle) }}"
+                            placeholder="">
+                    </div>
                     <div class="col-md-5">
                         <label class="text-muted">Razón social</label>
                         <select name="cliente_id" class="form-control" required>

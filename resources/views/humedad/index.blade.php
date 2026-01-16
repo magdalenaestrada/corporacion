@@ -5,7 +5,15 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Humedades</h5>
-            <a href="{{ route('humedad.create') }}" class="btn btn-primary btn-sm">Nueva Humedad</a>
+
+            <div class="d-flex gap-2">
+                {{-- Exportar Excel (con el mismo filtro si existe) --}}
+            <a href="{{ route('humedad.export', request()->query()) }}" class="btn btn-success btn-sm">
+                Exportar Excel
+            </a>
+
+                <a href="{{ route('humedad.create') }}" class="btn btn-primary btn-sm">Nueva Humedad</a>
+            </div>
         </div>
 
         <div class="card-body">
@@ -16,6 +24,31 @@
             @if(session('info'))
                 <div class="alert alert-info mb-2">{{ session('info') }}</div>
             @endif
+
+            {{-- Buscador global --}}
+            <form method="GET" action="{{ route('humedad.index') }}" class="mb-3">
+                <div class="row g-2 align-items-center">
+                    <div class="col-12 col-md-6 col-lg-5">
+                        <input type="text"
+                               name="q"
+                               value="{{ request('q') }}"
+                               class="form-control"
+                               placeholder="Buscar por código, mineral, fechas, razón social, humedad, tickets, obs...">
+                    </div>
+
+                    <div class="col-12 col-md-auto">
+                        <button class="btn btn-dark" type="submit">Buscar</button>
+                        <a href="{{ route('humedad.index') }}" class="btn btn-outline-secondary">Limpiar</a>
+                    </div>
+
+                    {{-- opcional: mostrar conteo --}}
+                    <div class="col-12 col-md-auto ms-md-auto text-muted small">
+                        @if(request('q'))
+                            Filtro: <b>{{ request('q') }}</b>
+                        @endif
+                    </div>
+                </div>
+            </form>
 
             <div class="table-responsive">
                 <table class="table table-bordered table-striped align-middle">
@@ -53,9 +86,12 @@
                             <td>{{ $h->fecha_recepcion ? \Carbon\Carbon::parse($h->fecha_recepcion)->format('d/m/Y') : '' }}</td>
                             <td>{{ $periodoTexto }}</td>
                             <td>{{ $h->fecha_emision ? \Carbon\Carbon::parse($h->fecha_emision)->format('d/m/Y') : '' }}</td>
-                            <td>{{ $h->cliente->razon_social ?? '' }}</td>
+                            <td>
+                                {{ $h->cliente->razon_social ?? '' }}
+                                {{ !empty($h->cliente_detalle) ? ' - '.$h->cliente_detalle : '' }}
+                            </td>
                             <td>{{ $h->humedad ?? '' }}</td>
-                            <td>{{ number_format($pesoTotal, 0, '.', ',') }}</td>
+                            <td>{{ number_format($pesoTotal, 0, ',', '.') }}</td>
                             <td style="max-width:240px;">
                                 <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                                     {{ $h->observaciones ?? '' }}
@@ -98,7 +134,8 @@
             </div>
 
             <div class="mt-2">
-                {{ $humedades->links() }}
+                {{-- Mantener filtro al paginar --}}
+                {{ $humedades->appends(request()->query())->links() }}
             </div>
         </div>
     </div>

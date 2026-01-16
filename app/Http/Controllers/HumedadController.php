@@ -11,7 +11,7 @@ use App\Models\HumedadPeso;
 
 use App\Models\EstadoMineral;
 use App\Models\Cliente;
-
+use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Peso;
 use App\Models\PesoKilate;
 
@@ -20,7 +20,7 @@ class HumedadController extends Controller
     public function __construct()
     { 
         $this->middleware('permission:ver humedad', ['only' => ['index','show']]);
-        $this->middleware('permission:create humedad', ['only' => ['create', 'store']]);
+        $this->middleware('permission:create humedad', ['only' => ['create', 'store','export']]);
         $this->middleware('permission:editar humedad', ['only' => ['update','edit']]);
         $this->middleware('permission:eliminar humedad', ['only' => ['destroy']]);
     }
@@ -36,8 +36,8 @@ class HumedadController extends Controller
         $yy = now()->format('y');          // "26"
         $prefix = 'H' . $yy;               // "H26"
 
-        // Inicio especial para 2026 (yy=26): 00063
-        $startSeq = ($yy === '26') ? 63 : 1;
+        // Inicio especial para 2026 (yy=26): 00073
+        $startSeq = ($yy === '26') ? 73 : 1;
 
         // Bloqueo para evitar duplicidad en concurrencia
         $last = Humedad::where('codigo', 'like', $prefix . '%')
@@ -121,16 +121,60 @@ class HumedadController extends Controller
         ]);
     }
 
-    public function index()
-    {
-        $humedades = Humedad::with(['mineral', 'cliente', 'pesos'])
-            ->orderBy('id', 'desc')
-            ->paginate(20);
+public function index(Request $request)
+{
+    $q = trim((string) $request->get('q', ''));
 
-        return view('humedad.index', compact('humedades'));
-    }
+    // "90.120" -> "90120" (quita puntos, comas, espacios, etc.)
+    $qNum = preg_replace('/\D+/', '', $q);
 
-    public function create()
+    $humedades = Humedad::query()
+        ->with(['mineral', 'cliente', 'pesos'])
+        ->when($q !== '', function ($query) use ($q, $qNum) {
+            $query->where(function ($sub) use ($q, $qNum) {
+
+                // Campos directos de humedad + cliente_detalle
+                $sub->where('codigo', 'like', "%{$q}%")
+                    ->orWhere('humedad', 'like', "%{$q}%")
+                    ->orWhere('observaciones', 'like', "%{$q}%")
+                    ->orWhere('fecha_recepcion', 'like', "%{$q}%")
+                    ->orWhere('fecha_emision', 'like', "%{$q}%")
+                    ->orWhere('periodo_inicio', 'like', "%{$q}%")
+                    ->orWhere('periodo_fin', 'like', "%{$q}%")
+                    ->orWhere('cliente_detalle', 'like', "%{$q}%"); // ✅ NUEVO
+
+                // Relación Mineral
+                $sub->orWhereHas('mineral', function ($m) use ($q) {
+                    $m->where('nombre', 'like', "%{$q}%");
+                });
+
+                // Relación Cliente
+                $sub->orWhereHas('cliente', function ($c) use ($q) {
+                    $c->where('razon_social', 'like', "%{$q}%");
+                });
+
+                // Relación Pesos (tickets)
+                $sub->orWhereHas('pesos', function ($p) use ($q, $qNum) {
+                    $p->where('nro_salida', 'like', "%{$q}%")
+                      ->orWhere('origen', 'like', "%{$q}%");
+
+                    // neto: permitir buscar 90.120
+                    if ($qNum !== '') {
+                        $p->orWhere('neto', 'like', "%{$qNum}%");
+                    } else {
+                        $p->orWhere('neto', 'like', "%{$q}%");
+                    }
+                });
+            });
+        })
+        ->latest('id')
+        ->paginate(15)
+        ->appends(['q' => $q]); // mantiene el query en paginación
+
+    return view('humedad.index', compact('humedades'));
+}
+
+public function create()
     {
         $minerales = EstadoMineral::where('activo', 1)
             ->orderBy('nombre')
@@ -154,105 +198,108 @@ class HumedadController extends Controller
 
         return view('humedad.create', compact('minerales', 'clientes', 'pesosAlfa', 'pesosKilate'));
     }
-
     public function store(Request $request)
-    {
-        $request->validate([
-            'estado_mineral_id' => ['required', 'integer', 'exists:estados_mineral,id'],
-            'cliente_id'        => ['required', 'integer', 'exists:clientes,id'],
+{
+    $request->validate([
+        'estado_mineral_id' => ['required', 'integer', 'exists:estados_mineral,id'],
+        'cliente_id'        => ['required', 'integer', 'exists:clientes,id'],
 
-            'fecha_recepcion'   => ['nullable', 'date'],
-            'fecha_emision'     => ['nullable', 'date'],
+        'cliente_detalle'   => ['nullable', 'string', 'max:50'], // ✅ NUEVO
 
-            'periodo_inicio'    => ['nullable', 'date'],
-            'periodo_fin'       => ['nullable', 'date', 'after_or_equal:periodo_inicio'],
+        'fecha_recepcion'   => ['nullable', 'date'],
+        'fecha_emision'     => ['nullable', 'date'],
 
-            'humedad'           => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'observaciones'     => ['nullable', 'string', 'max:500'],
+        'periodo_inicio'    => ['nullable', 'date'],
+        'periodo_fin'       => ['nullable', 'date', 'after_or_equal:periodo_inicio'],
 
-            'pesos_alfa'        => ['nullable', 'array'],
-            'pesos_alfa.*'      => ['integer'],
+        'humedad'           => ['nullable', 'numeric', 'min:0', 'max:100'],
+        'observaciones'     => ['nullable', 'string', 'max:500'],
 
-            'pesos_kilate'      => ['nullable', 'array'],
-            'pesos_kilate.*'    => ['integer'],
+        'pesos_alfa'        => ['nullable', 'array'],
+        'pesos_alfa.*'      => ['integer'],
+
+        'pesos_kilate'      => ['nullable', 'array'],
+        'pesos_kilate.*'    => ['integer'],
+    ]);
+
+    $alfaIds   = (array) $request->input('pesos_alfa', []);
+    $kilateIds = (array) $request->input('pesos_kilate', []);
+
+    return DB::transaction(function () use ($request, $alfaIds, $kilateIds) {
+
+        // ✅ Anti-duplicidad (bloqueo)
+        if (!empty($alfaIds)) {
+            $yaUsadosA = HumedadPeso::where('origen', 'A')
+                ->whereIn('nro_salida', $alfaIds)
+                ->lockForUpdate()
+                ->exists();
+
+            if ($yaUsadosA) {
+                return back()->withErrors(['pesos_alfa' => 'Uno o más tickets ALFA ya fueron registrados.'])->withInput();
+            }
+        }
+
+        if (!empty($kilateIds)) {
+            $yaUsadosK = HumedadPeso::where('origen', 'K')
+                ->whereIn('nro_salida', $kilateIds)
+                ->lockForUpdate()
+                ->exists();
+
+            if ($yaUsadosK) {
+                return back()->withErrors(['pesos_kilate' => 'Uno o más tickets KILATE ya fueron registrados.'])->withInput();
+            }
+        }
+
+        // ✅ Generar código consecutivo seguro (H26xxxxx)
+        $codigo = $this->generarCodigo();
+
+        // ✅ Normalizar detalle
+        $detalle = $request->cliente_detalle ? strtoupper(trim($request->cliente_detalle)) : null;
+
+        $humedad = Humedad::create([
+            'codigo'            => $codigo,
+            'estado_mineral_id' => $request->estado_mineral_id,
+            'cliente_id'        => $request->cliente_id,
+            'cliente_detalle'   => $detalle, // ✅ NUEVO
+            'fecha_recepcion'   => $request->fecha_recepcion,
+            'fecha_emision'     => $request->fecha_emision,
+            'periodo_inicio'    => $request->periodo_inicio,
+            'periodo_fin'       => $request->periodo_fin,
+            'humedad'           => $request->humedad,
+            'observaciones'     => $request->observaciones,
         ]);
 
-        $alfaIds   = (array) $request->input('pesos_alfa', []);
-        $kilateIds = (array) $request->input('pesos_kilate', []);
-
-        // TODO dentro de transacción para evitar carreras
-        return DB::transaction(function () use ($request, $alfaIds, $kilateIds) {
-
-            // ✅ Anti-duplicidad (bloqueo)
-            if (!empty($alfaIds)) {
-                $yaUsadosA = HumedadPeso::where('origen', 'A')
-                    ->whereIn('nro_salida', $alfaIds)
-                    ->lockForUpdate()
-                    ->exists();
-
-                if ($yaUsadosA) {
-                    return back()->withErrors(['pesos_alfa' => 'Uno o más tickets ALFA ya fueron registrados.'])->withInput();
-                }
+        // Guardar ALFA (A)
+        if (!empty($alfaIds)) {
+            $alfa = Peso::whereIn('NroSalida', $alfaIds)->get(['NroSalida', 'Neto']);
+            foreach ($alfa as $p) {
+                HumedadPeso::create([
+                    'humedad_id' => $humedad->id,
+                    'origen'     => 'A',
+                    'nro_salida' => $p->NroSalida,
+                    'neto'       => $p->Neto,
+                ]);
             }
+        }
 
-            if (!empty($kilateIds)) {
-                $yaUsadosK = HumedadPeso::where('origen', 'K')
-                    ->whereIn('nro_salida', $kilateIds)
-                    ->lockForUpdate()
-                    ->exists();
-
-                if ($yaUsadosK) {
-                    return back()->withErrors(['pesos_kilate' => 'Uno o más tickets KILATE ya fueron registrados.'])->withInput();
-                }
+        // Guardar KILATE (K)
+        if (!empty($kilateIds)) {
+            $kilate = PesoKilate::whereIn('NroSalida', $kilateIds)->get(['NroSalida', 'Neto']);
+            foreach ($kilate as $p) {
+                HumedadPeso::create([
+                    'humedad_id' => $humedad->id,
+                    'origen'     => 'K',
+                    'nro_salida' => $p->NroSalida,
+                    'neto'       => $p->Neto,
+                ]);
             }
+        }
 
-            // ✅ Generar código consecutivo seguro (H26xxxxx)
-            $codigo = $this->generarCodigo();
+        return redirect()->route('humedad.index')
+            ->with('success', "Humedad registrada correctamente. Código: {$codigo}");
+    });
+}
 
-            $humedad = Humedad::create([
-                'codigo'           => $codigo,
-                'estado_mineral_id'=> $request->estado_mineral_id,
-                'cliente_id'       => $request->cliente_id,
-                'fecha_recepcion'  => $request->fecha_recepcion,
-                'fecha_emision'    => $request->fecha_emision,
-                'periodo_inicio'   => $request->periodo_inicio,
-                'periodo_fin'      => $request->periodo_fin,
-                'humedad'          => $request->humedad,
-                'observaciones'    => $request->observaciones,
-            ]);
-
-            // Guardar ALFA (A)
-            if (!empty($alfaIds)) {
-                $alfa = Peso::whereIn('NroSalida', $alfaIds)->get(['NroSalida', 'Neto']);
-
-                foreach ($alfa as $p) {
-                    HumedadPeso::create([
-                        'humedad_id' => $humedad->id,
-                        'origen'     => 'A',
-                        'nro_salida' => $p->NroSalida,
-                        'neto'       => $p->Neto,
-                    ]);
-                }
-            }
-
-            // Guardar KILATE (K)
-            if (!empty($kilateIds)) {
-                $kilate = PesoKilate::whereIn('NroSalida', $kilateIds)->get(['NroSalida', 'Neto']);
-
-                foreach ($kilate as $p) {
-                    HumedadPeso::create([
-                        'humedad_id' => $humedad->id,
-                        'origen'     => 'K',
-                        'nro_salida' => $p->NroSalida,
-                        'neto'       => $p->Neto,
-                    ]);
-                }
-            }
-
-            return redirect()->route('humedad.index')
-                ->with('success', "Humedad registrada correctamente. Código: {$codigo}");
-        });
-    }
 
     public function show($id)
     {
@@ -321,28 +368,34 @@ class HumedadController extends Controller
         ));
     }
 
-    public function update(Request $request, $id)
-    {
-        $humedad = Humedad::findOrFail($id);
+  public function update(Request $request, $id)
+{
+    $humedad = Humedad::findOrFail($id);
 
-        $data = $request->validate([
-            'estado_mineral_id' => ['required','integer','exists:estados_mineral,id'],
-            'cliente_id'        => ['required','integer','exists:clientes,id'],
-            'fecha_recepcion'   => ['nullable','date'],
-            'fecha_emision'     => ['nullable','date'],
-            'periodo_inicio'    => ['nullable','date'],
-            'periodo_fin'       => ['nullable','date','after_or_equal:periodo_inicio'],
-            'humedad'           => ['nullable','numeric','min:0','max:100'],
-            'observaciones'     => ['nullable','string','max:500'],
-        ]);
+    $data = $request->validate([
+        'estado_mineral_id' => ['required','integer','exists:estados_mineral,id'],
+        'cliente_id'        => ['required','integer','exists:clientes,id'],
+        'cliente_detalle'   => ['nullable','string','max:50'], // ✅ NUEVO
 
-        $humedad->update($data);
+        'fecha_recepcion'   => ['nullable','date'],
+        'fecha_emision'     => ['nullable','date'],
+        'periodo_inicio'    => ['nullable','date'],
+        'periodo_fin'       => ['nullable','date','after_or_equal:periodo_inicio'],
+        'humedad'           => ['nullable','numeric','min:0','max:100'],
+        'observaciones'     => ['nullable','string','max:500'],
+    ]);
 
-        return redirect()
-            ->route('humedad.index')
-            ->with('info', 'Humedad actualizada correctamente.');
-    }
+    // ✅ Normalizar detalle (MAYÚSCULAS / null)
+    $data['cliente_detalle'] = !empty($data['cliente_detalle'])
+        ? strtoupper(trim($data['cliente_detalle']))
+        : null;
 
+    $humedad->update($data);
+
+    return redirect()
+        ->route('humedad.index')
+        ->with('info', 'Humedad actualizada correctamente.');
+}
     public function destroy($id)
     {
         $humedad = Humedad::findOrFail($id);
@@ -355,4 +408,9 @@ class HumedadController extends Controller
         return redirect()->route('humedad.index')
             ->with('success', 'Humedad eliminada.');
     }
+
+    public function export(Request $request)
+{
+    return Excel::download(new \App\Exports\HumedadesExport($request->get('q')), 'humedades.xlsx');
+}
 }
