@@ -248,9 +248,10 @@
                         <p><strong>RUC:</strong> {{ $liquidacion->cliente->ruc_empresa }}</p>
                         <p><strong>PRODUCTOR:</strong> {{ $liquidacion->cliente->razon_social }}</p>
                         <p><strong>CLIENTE:</strong> {{ $liquidacion->cliente->datos_cliente }}</p>
-                     <!--    <p><strong>DIRECCIÓN:</strong> {{ $liquidacion->cliente->direccion }}</p>
+                     <!-- <p><strong>DIRECCIÓN:</strong> {{ $liquidacion->cliente->direccion }}</p>
                         <p><strong>TELÉFONO:</strong> {{ $liquidacion->cliente->telefono }}</p>-->
                         <p><strong>LOTE:</strong> {{ $liquidacion->lote }}</p>
+                        <strong>TIPO MINERAL:</strong> {{ $liquidacion->producto }}
                         <p></p>
                         <p><strong>FECHA INGRESO LOTE:</strong> {{ $liquidacion->fechai }} <strong> FECHA CIERRE:</strong> {{ $liquidacion->updated_at }} <strong>CERRADO POR: </strong> 
                         <td>

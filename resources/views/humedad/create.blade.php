@@ -353,3 +353,32 @@
   });
 </script>
 @endsection
+<script>
+  // =========================
+  //  ANTI DOBLE ENVIO (LENTO INTERNET)
+  // =========================
+  (function () {
+    const form = document.getElementById('humedadForm');
+    const btn  = document.getElementById('btnGuardar');
+    if (!form || !btn) return;
+
+    let submitted = false;
+
+    form.addEventListener('submit', function () {
+      if (submitted) return; // si ya se envió, no hacer nada
+      submitted = true;
+
+      // deshabilitar botón + evitar doble click
+      btn.disabled = true;
+      btn.innerHTML = 'Guardando...';
+
+      // deshabilitar todos los inputs para que no cambien durante el envío
+      form.querySelectorAll('input, select, textarea, button').forEach(el => {
+        if (el !== btn) el.readOnly = true;
+        el.disabled = true;
+      });
+
+      // permitir que el submit siga
+    });
+  })();
+</script>

@@ -12,7 +12,7 @@
             <div class="row g-2">
                 <div class="col-md-3"><b>Mineral:</b> {{ $humedad->mineral->nombre ?? '' }}</div>
                 <div class="col-md-5"><b>Razón social:</b>  {{ $humedad->cliente->razon_social ?? '' }}
-    {{ !empty($humedad->cliente_detalle) ? ' - '.$humedad->cliente_detalle : '' }}</div>
+                 {{ !empty($humedad->cliente_detalle) ? ' - '.$humedad->cliente_detalle : '' }}</div>
                 <div class="col-md-2"><b>Recepción:</b> {{ $humedad->fecha_recepcion }}</div>
                 <div class="col-md-2"><b>Emisión:</b> {{ $humedad->fecha_emision }}</div>
                 <div class="col-md-4"><b>Periodo:</b> {{ $humedad->periodo_inicio }} AL {{ $humedad->periodo_fin }}</div>
