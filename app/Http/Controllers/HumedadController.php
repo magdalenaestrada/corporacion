@@ -198,13 +198,13 @@ public function create()
 
         return view('humedad.create', compact('minerales', 'clientes', 'pesosAlfa', 'pesosKilate'));
     }
-    public function store(Request $request)
+   public function store(Request $request)
 {
     $request->validate([
         'estado_mineral_id' => ['required', 'integer', 'exists:estados_mineral,id'],
         'cliente_id'        => ['required', 'integer', 'exists:clientes,id'],
 
-        'cliente_detalle'   => ['nullable', 'string', 'max:50'], // ✅ NUEVO
+        'cliente_detalle'   => ['nullable', 'string', 'max:50'],
 
         'fecha_recepcion'   => ['nullable', 'date'],
         'fecha_emision'     => ['nullable', 'date'],
@@ -224,6 +224,13 @@ public function create()
 
     $alfaIds   = (array) $request->input('pesos_alfa', []);
     $kilateIds = (array) $request->input('pesos_kilate', []);
+
+    // ✅ VALIDACIÓN: mínimo 1 ticket (A o K)
+    if (count($alfaIds) === 0 && count($kilateIds) === 0) {
+        return back()
+            ->withErrors(['pesos' => 'Debes seleccionar al menos 1 ticket (ALFA o KILATE) para guardar.'])
+            ->withInput();
+    }
 
     return DB::transaction(function () use ($request, $alfaIds, $kilateIds) {
 
@@ -260,7 +267,7 @@ public function create()
             'codigo'            => $codigo,
             'estado_mineral_id' => $request->estado_mineral_id,
             'cliente_id'        => $request->cliente_id,
-            'cliente_detalle'   => $detalle, // ✅ NUEVO
+            'cliente_detalle'   => $detalle,
             'fecha_recepcion'   => $request->fecha_recepcion,
             'fecha_emision'     => $request->fecha_emision,
             'periodo_inicio'    => $request->periodo_inicio,
@@ -299,6 +306,7 @@ public function create()
             ->with('success', "Humedad registrada correctamente. Código: {$codigo}");
     });
 }
+
 
 
     public function show($id)
@@ -368,14 +376,14 @@ public function create()
         ));
     }
 
-  public function update(Request $request, $id)
+public function update(Request $request, $id)
 {
-    $humedad = Humedad::findOrFail($id);
+    $humedad = Humedad::with('pesos')->findOrFail($id);
 
     $data = $request->validate([
         'estado_mineral_id' => ['required','integer','exists:estados_mineral,id'],
         'cliente_id'        => ['required','integer','exists:clientes,id'],
-        'cliente_detalle'   => ['nullable','string','max:50'], // ✅ NUEVO
+        'cliente_detalle'   => ['nullable','string','max:50'],
 
         'fecha_recepcion'   => ['nullable','date'],
         'fecha_emision'     => ['nullable','date'],
@@ -383,19 +391,91 @@ public function create()
         'periodo_fin'       => ['nullable','date','after_or_equal:periodo_inicio'],
         'humedad'           => ['nullable','numeric','min:0','max:100'],
         'observaciones'     => ['nullable','string','max:500'],
+
+        // ✅ tickets
+        'pesos_alfa'        => ['nullable','array'],
+        'pesos_alfa.*'      => ['integer'],
+        'pesos_kilate'      => ['nullable','array'],
+        'pesos_kilate.*'    => ['integer'],
     ]);
 
-    // ✅ Normalizar detalle (MAYÚSCULAS / null)
     $data['cliente_detalle'] = !empty($data['cliente_detalle'])
         ? strtoupper(trim($data['cliente_detalle']))
         : null;
 
-    $humedad->update($data);
+    $alfaIds   = (array) $request->input('pesos_alfa', []);
+    $kilateIds = (array) $request->input('pesos_kilate', []);
 
-    return redirect()
-        ->route('humedad.index')
-        ->with('info', 'Humedad actualizada correctamente.');
+    // ✅ mínimo 1 ticket (opcional, pero recomendado)
+    if (count($alfaIds) === 0 && count($kilateIds) === 0) {
+        return back()->withErrors(['pesos' => 'Debes seleccionar al menos 1 ticket (ALFA o KILATE).'])->withInput();
+    }
+
+    return DB::transaction(function () use ($humedad, $data, $alfaIds, $kilateIds) {
+
+        // ✅ Anti-duplicidad: no permitir tickets que estén en otra humedad
+        if (!empty($alfaIds)) {
+            $yaUsadosA = HumedadPeso::where('origen', 'A')
+                ->whereIn('nro_salida', $alfaIds)
+                ->where('humedad_id', '!=', $humedad->id)
+                ->lockForUpdate()
+                ->exists();
+
+            if ($yaUsadosA) {
+                return back()->withErrors(['pesos_alfa' => 'Uno o más tickets ALFA ya fueron registrados en otra Humedad.'])->withInput();
+            }
+        }
+
+        if (!empty($kilateIds)) {
+            $yaUsadosK = HumedadPeso::where('origen', 'K')
+                ->whereIn('nro_salida', $kilateIds)
+                ->where('humedad_id', '!=', $humedad->id)
+                ->lockForUpdate()
+                ->exists();
+
+            if ($yaUsadosK) {
+                return back()->withErrors(['pesos_kilate' => 'Uno o más tickets KILATE ya fueron registrados en otra Humedad.'])->withInput();
+            }
+        }
+
+        // 1) actualiza cabecera
+        $humedad->update($data);
+
+        // 2) sincroniza pivot (borra los que quitaron y agrega los nuevos)
+        HumedadPeso::where('humedad_id', $humedad->id)->delete();
+
+        // volver a insertar ALFA
+        if (!empty($alfaIds)) {
+            $alfa = Peso::whereIn('NroSalida', $alfaIds)->get(['NroSalida','Neto']);
+            foreach ($alfa as $p) {
+                HumedadPeso::create([
+                    'humedad_id' => $humedad->id,
+                    'origen'     => 'A',
+                    'nro_salida' => $p->NroSalida,
+                    'neto'       => $p->Neto,
+                ]);
+            }
+        }
+
+        // volver a insertar KILATE
+        if (!empty($kilateIds)) {
+            $kilate = PesoKilate::whereIn('NroSalida', $kilateIds)->get(['NroSalida','Neto']);
+            foreach ($kilate as $p) {
+                HumedadPeso::create([
+                    'humedad_id' => $humedad->id,
+                    'origen'     => 'K',
+                    'nro_salida' => $p->NroSalida,
+                    'neto'       => $p->Neto,
+                ]);
+            }
+        }
+
+        return redirect()
+            ->route('humedad.index')
+            ->with('info', 'Humedad actualizada correctamente.');
+    });
 }
+
     public function destroy($id)
     {
         $humedad = Humedad::findOrFail($id);

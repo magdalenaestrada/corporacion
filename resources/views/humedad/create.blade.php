@@ -173,9 +173,11 @@
                         </div>
                     </div>
                 </div>
-
+                <div id="alertSeleccion" class="alert alert-danger d-none mt-2">
+                    Debes seleccionar al menos 1 ticket (ALFA o KILATE) para guardar.
+                </div>
                 <div class="text-center mt-3">
-                    <button class="btn btn-primary">Guardar Humedad</button>
+                    <button id="btnGuardar" type="submit" class="btn btn-primary">Guardar Humedad</button>
                 </div>
             </form>
         </div>
@@ -354,31 +356,60 @@
 </script>
 @endsection
 <script>
-  // =========================
-  //  ANTI DOBLE ENVIO (LENTO INTERNET)
-  // =========================
-  (function () {
-    const form = document.getElementById('humedadForm');
-    const btn  = document.getElementById('btnGuardar');
-    if (!form || !btn) return;
+(function () {
+  const form = document.getElementById('humedadForm');
+  const btn  = document.getElementById('btnGuardar');
+  const alertBox = document.getElementById('alertSeleccion');
+  if (!form || !btn) return;
 
-    let submitted = false;
+  let submitted = false;
 
-    form.addEventListener('submit', function () {
-      if (submitted) return; // si ya se envió, no hacer nada
-      submitted = true;
+  function haySeleccion() {
+    const a = document.querySelectorAll('input[name="pesos_alfa[]"]:checked').length;
+    const k = document.querySelectorAll('input[name="pesos_kilate[]"]:checked').length;
+    return (a + k) >= 1;
+  }
 
-      // deshabilitar botón + evitar doble click
-      btn.disabled = true;
-      btn.innerHTML = 'Guardando...';
+  form.addEventListener('submit', function (e) {
+    // 1) Validación mínima
+    if (!haySeleccion()) {
+      e.preventDefault();
+      submitted = false; // por si ya intentó antes
+      btn.disabled = false;
+      if (alertBox) {
+        alertBox.classList.remove('d-none');
+        alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        alert('Debes seleccionar al menos 1 ticket (ALFA o KILATE) para guardar.');
+      }
+      return;
+    }
 
-      // deshabilitar todos los inputs para que no cambien durante el envío
-      form.querySelectorAll('input, select, textarea, button').forEach(el => {
-        if (el !== btn) el.readOnly = true;
-        el.disabled = true;
-      });
+    // si pasa, ocultar alerta
+    if (alertBox) alertBox.classList.add('d-none');
 
-      // permitir que el submit siga
+    // 2) Anti doble envío
+    if (submitted) {
+      e.preventDefault();
+      return;
+    }
+    submitted = true;
+
+    btn.disabled = true;
+    btn.innerHTML = 'Guardando...';
+
+    // NO deshabilites los checkbox antes del submit (si los deshabilitas, no viajan).
+    // Solo bloquea el botón y los inputs que no afectan al envío si quieres.
+    form.querySelectorAll('input, select, textarea').forEach(el => {
+      if (el.type !== 'checkbox') el.readOnly = true;
     });
-  })();
+  });
+
+  // si el usuario marca algo, ocultar el mensaje
+  document.addEventListener('change', function(e){
+    if (e.target.matches('input[name="pesos_alfa[]"], input[name="pesos_kilate[]"]')) {
+      if (alertBox && haySeleccion()) alertBox.classList.add('d-none');
+    }
+  });
+})();
 </script>
