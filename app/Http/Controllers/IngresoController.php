@@ -422,34 +422,43 @@ public function chancado()
 }
 public function soloChancado(Request $request)
 {
-    $query = Ingreso::where('estado', 'CHANCADO');
+    $base = Ingreso::query()
+        ->where('estado', 'CHANCADO');
 
     // Búsqueda
-    if ($request->has('search')) {
+    if ($request->filled('search')) {
         $search = $request->get('search');
-        $query->where(function ($q) use ($search) {
-            $q->where('codigo', 'like', "%$search%")
-              ->orWhere('identificador', 'like', "%$search%")
-              ->orWhere('nom_iden', 'like', "%$search%");
+        $base->where(function ($q) use ($search) {
+            $q->where('codigo', 'like', "%{$search}%")
+              ->orWhere('identificador', 'like', "%{$search}%")
+              ->orWhere('nom_iden', 'like', "%{$search}%")
+              ->orWhere('NroSalida', 'like', "%{$search}%")
+              ->orWhere('lote', 'like', "%{$search}%");
         });
     }
 
     // Filtro por fase
     if ($request->filled('fase')) {
-        $query->where('fase', $request->get('fase'));
+        $base->where('fase', $request->get('fase'));
     }
-    $query->orderBy('created_at', 'desc');
-    $ingresos = $query->with('user')->paginate(15);
 
-    // Cálculos
-    $pesoTotal = $ingresos->sum('peso_total');
-    $pesoIngresados = $ingresos->where('fase', 'INGRESADO')->sum('peso_total');
-    $pesoBlending = $ingresos->where('fase', 'BLENDING')->sum('peso_total');
-    $pesoDespachado = $ingresos->where('fase', 'DESPACHADO')->sum('peso_total');
-    $pesoRetirado = $ingresos->where('fase', 'RETIRADO')->sum('peso_total');
-    $pesoEnStock = $pesoIngresados + $pesoBlending ;
+    // ====== TOTALES (sobre el query completo filtrado) ======
+    $pesoTotal      = (clone $base)->sum('peso_total');
+    $pesoIngresados = (clone $base)->where('fase', 'INGRESADO')->sum('peso_total');
+    $pesoBlending   = (clone $base)->where('fase', 'BLENDING')->sum('peso_total');
+    $pesoDespachado = (clone $base)->where('fase', 'DESPACHADO')->sum('peso_total');
+    $pesoRetirado   = (clone $base)->where('fase', 'RETIRADO')->sum('peso_total');
+    $pesoEnStock    = $pesoIngresados + $pesoBlending;
 
-    $fases = Ingreso::select('fase')->distinct()->pluck('fase');
+    // ====== LISTADO PAGINADO ======
+    $ingresos = (clone $base)
+        ->with('user')
+        ->orderBy('created_at', 'desc')
+        ->paginate(200)
+        ->appends($request->only(['search','fase'])); // mantiene filtros al paginar
+
+    // fases (si quieres que solo muestre fases del CHANCADO)
+    $fases = Ingreso::where('estado', 'CHANCADO')->select('fase')->distinct()->pluck('fase');
 
     return view('ingresos.indexsolo', compact(
         'ingresos',

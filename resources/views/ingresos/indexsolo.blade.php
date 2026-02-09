@@ -42,7 +42,7 @@
                         
                         <div class="card-body">
                             <!-- Formulario de búsqueda -->
-                            <form method="GET" action="{{ route('ingresos.index') }}" class="mb-3">
+                            <form method="GET" action="{{ route('ingresos.soloChancado') }}" class="mb-3">
                                 <div class="row">
                                     <div class="col-md-3">
                                         <input type="text" name="search" class="form-control" placeholder="Buscar..." value="{{ request()->get('search') }}">

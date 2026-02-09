@@ -326,26 +326,26 @@
 
           // IMPORTANT: solo totalTMH sin miles
           function actualizarTotalTMH() {
-  let totalTMH = 0;
+                let totalTMH = 0;
 
-  $('#tablaDespacho tbody tr').each(function(){
-    const pesoNeto = toNum($(this).find('td').eq(5).text());
-    if(!isNaN(pesoNeto)) totalTMH += pesoNeto;
-  });
+                $('#tablaDespacho tbody tr').each(function(){
+                    const pesoNeto = toNum($(this).find('td').eq(5).text());
+                    if(!isNaN(pesoNeto)) totalTMH += pesoNeto;
+                });
 
-  // TONELAJE TOTAL DESPACHADO TMH (solo este sin miles, 3 decimales)
-  $('#totalTMH').val(totalTMH.toFixed(3));
+                // TONELAJE TOTAL DESPACHADO TMH (solo este sin miles, 3 decimales)
+                $('#totalTMH').val(totalTMH.toFixed(3));
 
-  // TMH TOTAL (del blending)
-  let pesoblending = toNum('{{ $blending->pesoblending }}');
-  if (isNaN(pesoblending)) pesoblending = 0;
+                // TMH TOTAL (del blending)
+                let pesoblending = toNum('{{ $blending->pesoblending }}');
+                if (isNaN(pesoblending)) pesoblending = 0;
 
-  // ✅ REGLA: FALTA/EXCEDE = TMH TOTAL - DESPACHADO
-  const diferencia = pesoblending - totalTMH;
+                // ✅ REGLA: FALTA/EXCEDE = TMH TOTAL - DESPACHADO
+                const diferencia = pesoblending - totalTMH;
 
-  // Muestra con 3 decimales (negativo = falta, positivo = excede)
-  $('input[name="masomenos"]').val(diferencia.toFixed(3));
-}
+                // Muestra con 3 decimales (negativo = falta, positivo = excede)
+                $('input[name="masomenos"]').val(diferencia.toFixed(3));
+                }
 
 
           function disableOption(value, disabled){
