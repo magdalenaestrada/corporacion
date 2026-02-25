@@ -43,22 +43,38 @@
                         <div class="card-body">
                             <!-- Formulario de búsqueda -->
                             <form method="GET" action="{{ route('ingresos.index') }}" class="mb-3">
-                                <div class="row">
+                                <div class="row g-2 align-items-end">
                                     <div class="col-md-3">
-                                        <input type="text" name="search" class="form-control" placeholder="Buscar..." value="{{ request()->get('search') }}">
+                                        <input type="text" name="search" class="form-control" placeholder="Buscar..."
+                                            value="{{ request('search') }}">
                                     </div>
-                                    <div class="col-md-3">
+
+                                    <div class="col-md-2">
                                         <select name="fase" class="form-control">
                                             <option value="">{{ __('Filtrar por Fase') }}</option>
                                             @foreach ($fases as $fase)
-                                                <option value="{{ $fase }}" {{ request()->get('fase') == $fase ? 'selected' : '' }}>
+                                                <option value="{{ $fase }}" {{ request('fase') == $fase ? 'selected' : '' }}>
                                                     {{ ucfirst($fase) }}
                                                 </option>
                                             @endforeach
                                         </select>
                                     </div>
+
                                     <div class="col-md-2">
+                                        <label class="form-label mb-1">Desde</label>
+                                        <input type="date" name="date_from" class="form-control"
+                                            value="{{ request('date_from') }}">
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label mb-1">Hasta</label>
+                                        <input type="date" name="date_to" class="form-control"
+                                            value="{{ request('date_to') }}">
+                                    </div>
+
+                                    <div class="col-md-3 d-flex gap-2">
                                         <button class="btn btn-primary" type="submit">{{ __('Filtrar') }}</button>
+                                        <a href="{{ route('ingresos.index') }}" class="btn btn-outline-secondary">Limpiar</a>
                                     </div>
                                 </div>
                             </form>

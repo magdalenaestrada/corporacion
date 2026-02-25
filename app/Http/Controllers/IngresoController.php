@@ -15,29 +15,30 @@ class IngresoController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:ver ingreso', ['only' => ['index', 'show', 'imprimir', 'lotizar']]);
+        $this->middleware('permission:ver ingreso', ['only' => ['index','show','imprimir','lotizar']]);
         $this->middleware('permission:create ingreso', ['only' => ['create', 'store']]);
-        $this->middleware('permission:editar ingreso', ['only' => ['update', 'edit']]);
+        $this->middleware('permission:editar ingreso', ['only' => ['update','edit']]);
         $this->middleware('permission:eliminar ingreso', ['only' => ['destroy']]);
-        //ultimo permiso
         $this->middleware('permission:retirar lote', ['only' => ['retirar']]);
     }
+
     public function index(Request $request)
     {
         $query = Ingreso::where('estado', '!=', 'CHANCADO')->orderBy('fecha_ingreso', 'desc');
 
-
-        // Filtros
+        // =========================
+        // FILTROS
+        // =========================
         if ($request->filled('search')) {
             $search = $request->get('search');
-            $query->where(function ($q) use ($search) {
+            $query->where(function($q) use ($search) {
                 $q->where('codigo', 'like', "%{$search}%")
-                    ->orWhere('identificador', 'like', "%{$search}%")
-                    ->orWhere('nom_iden', 'like', "%{$search}%")
-                    ->orWhere('NroSalida', 'like', "%{$search}%")
-                    ->orWhere('estado', 'like', "%{$search}%")
-                    ->orWhere('peso_total', 'like', "%{$search}%")
-                    ->orWhere('lote', 'like', "%{$search}%");
+                  ->orWhere('identificador', 'like', "%{$search}%")
+                  ->orWhere('nom_iden', 'like', "%{$search}%")
+                  ->orWhere('NroSalida', 'like', "%{$search}%")
+                  ->orWhere('estado', 'like', "%{$search}%")
+                  ->orWhere('peso_total', 'like', "%{$search}%")
+                  ->orWhere('lote', 'like', "%{$search}%");
             });
         }
 
@@ -45,19 +46,38 @@ class IngresoController extends Controller
             $query->where('fase', $request->fase);
         }
 
-        // Obtener ingresos y paginar
-        $ingresos = $query->paginate(200);
+        // ✅ FILTRO POR FECHAS (fecha_ingreso)
+        if ($request->filled('date_from')) {
+            $query->whereDate('fecha_ingreso', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('fecha_ingreso', '<=', $request->date_to);
+        }
 
-        // Obtener todas las fases disponibles
-        $fases = Ingreso::select('fase')->distinct()->pluck('fase');
+        // =========================
+        // LISTADO PAGINADO
+        // =========================
+        $ingresos = (clone $query)
+            ->with('user')
+            ->paginate(200)
+            ->appends($request->only(['search','fase','date_from','date_to']));
 
-        // Calcular pesos por fase
-        $pesoTotal = Ingreso::where('estado', '!=', 'CHANCADO')->sum('peso_total');
-        $pesoIngresados = Ingreso::where('fase', 'ingresado')->where('estado', '!=', 'CHANCADO')->sum('peso_total');
-        $pesoBlending = Ingreso::where('fase', 'blending')->where('estado', '!=', 'CHANCADO')->sum('peso_total');
-        $pesoDespachado = Ingreso::where('fase', 'despachado')->where('estado', '!=', 'CHANCADO')->sum('peso_total');
-        $pesoRetirado = Ingreso::where('fase', 'retirado')->where('estado', '!=', 'CHANCADO')->sum('peso_total');
-        // Peso en stock = Ingresado + Blending (excluyendo Despachado)
+        // =========================
+        // FASES DISPONIBLES
+        // (si quieres solo NO CHANCADO)
+        // =========================
+        $fases = Ingreso::where('estado', '!=', 'CHANCADO')->select('fase')->distinct()->pluck('fase');
+
+        // =========================
+        // TOTALES (con filtros aplicados)
+        // =========================
+        $pesoTotal      = (clone $query)->sum('peso_total');
+        $pesoIngresados = (clone $query)->where('fase', 'INGRESADO')->sum('peso_total');
+        $pesoBlending   = (clone $query)->where('fase', 'BLENDING')->sum('peso_total');
+        $pesoDespachado = (clone $query)->where('fase', 'DESPACHADO')->sum('peso_total');
+        $pesoRetirado   = (clone $query)->where('fase', 'RETIRADO')->sum('peso_total');
+
+        // Peso en stock = Ingresado + Blending (según tu lógica)
         $pesoEnStock = $pesoIngresados + $pesoBlending;
 
         // Agrupar por fase
@@ -76,65 +96,45 @@ class IngresoController extends Controller
         ));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-
     public function create(Request $request)
     {
         $ingresos = Ingreso::all();
         $user = Auth::user();
         $search = $request->input('search', '');
 
-        // Obtener todos los números de salida de ingresos existentes
         $nrosSalidaRegistrados = Ingreso::pluck('NroSalida')->map(function ($item) {
-            return explode('/', trim($item)); // Divide cada NroSalida por '/'
-        })->flatten()->unique()->toArray(); // Aplanar y obtener valores únicos
+            return explode('/', trim($item));
+        })->flatten()->unique()->toArray();
 
-        // Obtener todos los lotes ya registrados
         $lotesRegistrados = Ingreso::pluck('lote')->unique()->toArray();
 
-        // Obtener registros de Pesos con paginación, búsqueda y orden descendente, excluyendo los que ya están registrados
         $pesos = Peso::when($search, function ($query, $search) {
             return $query->where('NroSalida', 'like', "%{$search}%");
         })
-            ->whereNotIn('NroSalida', $nrosSalidaRegistrados) // Excluir todos los números de salida ya registrados
-            ->orderBy('NroSalida', 'desc')
-            ->paginate(800);
+        ->whereNotIn('NroSalida', $nrosSalidaRegistrados)
+        ->orderBy('NroSalida', 'desc')
+        ->paginate(perPage: 800);
 
         return view('ingresos.create', compact('ingresos', 'pesos', 'search', 'user', 'lotesRegistrados'));
     }
 
     public function store(Request $request)
     {
-        // ============================================================
-        // NORMALIZAR PESO_TOTAL: convertir "1.088.560" => "1088.560"
-        // ============================================================
         if ($request->filled('peso_total')) {
-
-            // Ejemplo recibido: "1.088.560"
             $raw = $request->peso_total;
-
-            // Eliminar todo lo que NO sea dígito: "1088560"
             $digits = preg_replace('/\D/', '', $raw);
 
-            // Si tiene más de 3 dígitos, los últimos 3 son decimales
             if (strlen($digits) > 3) {
                 $normalized = substr($digits, 0, -3) . '.' . substr($digits, -3);
             } else {
-                // Si tiene 3 dígitos o menos, es solo parte decimal
                 $normalized = '0.' . str_pad($digits, 3, '0', STR_PAD_LEFT);
             }
 
-            // Reemplazar el valor normalizado en el request
             $request->merge([
                 'peso_total' => $normalized
             ]);
         }
 
-        // ============================================================
-        // VALIDACIÓN ORIGINAL
-        // ============================================================
         $request->validate([
             'codigo' => 'required|string|max:255',
             'fecha_ingreso' => 'required|date',
@@ -164,9 +164,6 @@ class IngresoController extends Controller
             'fase' => 'nullable|string|max:255',
         ]);
 
-        // ============================================================
-        // GUARDADO ORIGINAL (sin tocar)
-        // ============================================================
         $ingreso = new Ingreso();
         $ingreso->codigo = $request->codigo;
         $ingreso->fecha_ingreso = $request->fecha_ingreso;
@@ -174,7 +171,7 @@ class IngresoController extends Controller
         $ingreso->ref_lote = $request->ref_lote;
         $ingreso->identificador = $request->identificador;
         $ingreso->nom_iden = $request->nom_iden;
-        $ingreso->peso_total = $request->peso_total; // YA LLEGA NORMALIZADO
+        $ingreso->peso_total = $request->peso_total;
         $ingreso->NroSalida = $request->NroSalida;
         $ingreso->placa = $request->placa;
         $ingreso->procedencia = $request->procedencia;
@@ -196,38 +193,25 @@ class IngresoController extends Controller
 
         $ingreso->fase = 'INGRESADO';
         $ingreso->usuario_id = auth()->id();
-
         $ingreso->save();
 
         return redirect()->route('ingresos.index')->with('success', 'Ingreso guardado exitosamente.');
     }
 
-
-
-    /**
-     * Display the specified resource.
-     */
     public function show($id)
     {
         $ingreso = Ingreso::findOrFail($id);
         return view('ingresos.show', compact('ingreso'));
     }
 
-
-    // Mostrar el formulario de edición
     public function edit($id)
     {
-        // Buscar el ingreso por su id
         $ingreso = Ingreso::findOrFail($id);
-
-        // Devolver la vista con el ingreso a editar
         return view('ingresos.edit', compact('ingreso'));
     }
 
-    // Actualizar el registro de ingreso
     public function update(Request $request, $id)
     {
-        // Validar los datos recibidos
         $request->validate([
             'estado' => 'required|string',
             'ref_lote' => 'nullable|string',
@@ -251,10 +235,8 @@ class IngresoController extends Controller
             'descripcion' => 'nullable|string|max:255',
         ]);
 
-        // Buscar el ingreso a actualizar
         $ingreso = Ingreso::findOrFail($id);
 
-        // Actualizar los campos del ingreso
         $ingreso->update([
             'estado' => $request->estado,
             'ref_lote' => $request->ref_lote,
@@ -275,44 +257,31 @@ class IngresoController extends Controller
             'fecha_salida' => $request->fecha_salida,
             'retiro' => $request->retiro,
             'NroSalida' => $request->NroSalida,
-            'descripcion' =>  $request->descripcion,
+            'descripcion' => $request->descripcion,
         ]);
 
-        // Redirigir a la lista de ingresos con un mensaje de éxito
         return redirect()->route('ingresos.index')->with('success', 'Ingreso actualizado correctamente');
     }
 
-
-
-
     public function destroy(string $id)
     {
-        // Buscar el ingreso por su ID
         $ingreso = Ingreso::findOrFail($id);
-
-        // Eliminar el ingreso
         $ingreso->delete();
-
-        // Redireccionar con un mensaje
         return redirect()->route('ingresos.index')->with('success', 'Ingreso eliminado exitosamente.');
     }
 
     public function buscarDocumento(Request $request)
     {
         $documento = $request->input('documento');
-
         $token = env('APIS_TOKEN');
 
-        // Configurar el cliente GuzzleHttp
         $client = new Client([
             'base_uri' => 'https://api.apis.net.pe',
             'verify' => false,
         ]);
 
-        // Determinar si es DNI o RUC
         $apiEndpoint = strlen($documento) === 8 ? '/v2/reniec/dni' : '/v2/sunat/ruc';
 
-        // Configurar los parámetros de la solicitud
         $parameters = [
             'http_errors' => false,
             'connect_timeout' => 5,
@@ -325,31 +294,30 @@ class IngresoController extends Controller
             'query' => ['numero' => $documento],
         ];
 
-        // Realizar la solicitud a la API
         $response = $client->request('GET', $apiEndpoint, $parameters);
-
-        // Obtener los datos de respuesta como un arreglo
         $responseData = json_decode($response->getBody()->getContents(), true);
 
-        // Devolver la respuesta o realizar otras acciones según tus necesidades
         return response()->json($responseData);
     }
+
     public function searchPesos(Request $request)
     {
         $query = $request->input('query');
 
         $pesos = Peso::where('NroSalida', 'LIKE', "%{$query}%")
-            ->orWhere('Neto', 'LIKE', "%{$query}%")
-            ->orWhere('Placa', 'LIKE', "%{$query}%")
-            ->get();
+                      ->orWhere('Neto', 'LIKE', "%{$query}%")
+                      ->orWhere('Placa', 'LIKE', "%{$query}%")
+                      ->get();
 
         return response()->json($pesos);
     }
+
     public function imprimir($id)
     {
         $ingreso = Ingreso::findOrFail($id);
         return view('ingresos.print', compact('ingreso'));
     }
+
     public function retirar($id)
     {
         $ingreso = Ingreso::findOrFail($id);
@@ -358,14 +326,13 @@ class IngresoController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Solo se pueden retirar ingresos que estén en fase INGRESADO.'
-            ], 400); // Código 400 = Bad Request
+            ], 400);
         }
 
         $ingreso->fase = 'RETIRADO';
         $ingreso->fecha_salida = Carbon::now();
         $ingreso->retiro = 'SI';
         $ingreso->lote = 'retirado';
-
         $ingreso->save();
 
         return response()->json([
@@ -373,17 +340,18 @@ class IngresoController extends Controller
             'message' => 'Ingreso retirado correctamente.'
         ]);
     }
+
     public function lotizar()
     {
         $ingresos = Ingreso::where('estado', '!=', 'CHANCADO')
-            ->with(['blendings']) // Si existe la relación blendings
+            ->with(['blendings'])
             ->get();
 
         $pesoTotal = $ingresos->sum('peso_total');
         $pesoIngresados = $ingresos->where('fase', 'INGRESADO')->sum('peso_total');
         $pesoBlending = $ingresos->where('fase', 'BLENDING')->sum('peso_total');
         $pesoDespachado = $ingresos->where('fase', 'DESPACHADO')->sum('peso_total');
-        $pesoEnStock = $pesoIngresados + $pesoBlending;
+        $pesoEnStock = $pesoIngresados + $pesoBlending ;
 
         return view('ingresos.lotizacion', compact(
             'ingresos',
@@ -398,10 +366,9 @@ class IngresoController extends Controller
     public function chancado()
     {
         $ingresos = Ingreso::where('estado', 'CHANCADO')
-            ->with(['blendings']) // solo si la relación existe
+            ->with(['blendings'])
             ->get();
 
-        // Calcular pesos por fase
         $pesoTotal = $ingresos->sum('peso_total');
         $pesoIngresados = $ingresos->where('fase', 'INGRESADO')->sum('peso_total');
         $pesoBlending = $ingresos->where('fase', 'BLENDING')->sum('peso_total');
@@ -417,36 +384,58 @@ class IngresoController extends Controller
             'pesoEnStock'
         ));
     }
+
     public function soloChancado(Request $request)
     {
-        $query = Ingreso::where('estado', 'CHANCADO');
+        $base = Ingreso::query()
+            ->where('estado', 'CHANCADO');
 
-        // Búsqueda
-        if ($request->has('search')) {
+        // =========================
+        // FILTROS
+        // =========================
+        if ($request->filled('search')) {
             $search = $request->get('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('codigo', 'like', "%$search%")
-                    ->orWhere('identificador', 'like', "%$search%")
-                    ->orWhere('nom_iden', 'like', "%$search%");
+            $base->where(function ($q) use ($search) {
+                $q->where('codigo', 'like', "%{$search}%")
+                  ->orWhere('identificador', 'like', "%{$search}%")
+                  ->orWhere('nom_iden', 'like', "%{$search}%")
+                  ->orWhere('NroSalida', 'like', "%{$search}%")
+                  ->orWhere('lote', 'like', "%{$search}%");
             });
         }
 
-        // Filtro por fase
         if ($request->filled('fase')) {
-            $query->where('fase', $request->get('fase'));
+            $base->where('fase', $request->get('fase'));
         }
-        $query->orderBy('created_at', 'desc');
-        $ingresos = $query->with('user')->paginate(15);
 
-        // Cálculos
-        $pesoTotal = $ingresos->sum('peso_total');
-        $pesoIngresados = $ingresos->where('fase', 'INGRESADO')->sum('peso_total');
-        $pesoBlending = $ingresos->where('fase', 'BLENDING')->sum('peso_total');
-        $pesoDespachado = $ingresos->where('fase', 'DESPACHADO')->sum('peso_total');
-        $pesoRetirado = $ingresos->where('fase', 'RETIRADO')->sum('peso_total');
-        $pesoEnStock = $pesoIngresados + $pesoBlending;
+        // ✅ FILTRO POR FECHAS (fecha_ingreso)
+        if ($request->filled('date_from')) {
+            $base->whereDate('fecha_ingreso', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $base->whereDate('fecha_ingreso', '<=', $request->date_to);
+        }
 
-        $fases = Ingreso::select('fase')->distinct()->pluck('fase');
+        // =========================
+        // TOTALES (con filtros aplicados)
+        // =========================
+        $pesoTotal      = (clone $base)->sum('peso_total');
+        $pesoIngresados = (clone $base)->where('fase', 'INGRESADO')->sum('peso_total');
+        $pesoBlending   = (clone $base)->where('fase', 'BLENDING')->sum('peso_total');
+        $pesoDespachado = (clone $base)->where('fase', 'DESPACHADO')->sum('peso_total');
+        $pesoRetirado   = (clone $base)->where('fase', 'RETIRADO')->sum('peso_total');
+        $pesoEnStock    = $pesoIngresados + $pesoBlending;
+
+        // =========================
+        // LISTADO PAGINADO
+        // =========================
+        $ingresos = (clone $base)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->paginate(200)
+            ->appends($request->only(['search','fase','date_from','date_to']));
+
+        $fases = Ingreso::where('estado', 'CHANCADO')->select('fase')->distinct()->pluck('fase');
 
         return view('ingresos.indexsolo', compact(
             'ingresos',
