@@ -365,7 +365,7 @@
                             <td class="value">20613318021</td>
                         </tr>
                         <tr>
-                            <td class="label">Representante</td>
+                            <td class="label">Liquidador</td>
                             <td class="value">
                                 {{ $liquidacion?->lastEditor?->name ?? $liquidacion?->user?->name }} </td>
                         </tr>
@@ -397,7 +397,7 @@
                 <ul>
                     <li>Ticket de balanza — N.º <b>{{ $liquidacion->ingreso->NroSalida ?? '—' }};</b></li>
                     <li> Peso total:
-                        <b>{{ $liquidacion->ingreso->peso_total ?? '—' }},</b>
+                        <b>{{ $liquidacion->ingreso->peso_total ?? '—' }}</b>
                     </li>
                     <li>Guia de transporte: {{ $liquidacion->ingreso->guia_transporte ?? '-' }}</li>
                     <li>Guia de remision: {{ $liquidacion->ingreso->guia_remision ?? '-' }}</li>
