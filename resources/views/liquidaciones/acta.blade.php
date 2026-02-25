@@ -31,11 +31,11 @@
         .page {
             background: white;
             width: 210mm;
-            min-height: 297mm;
             box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
             border-radius: 4px;
             padding: 20mm 18mm;
             position: relative;
+            margin-bottom: 30px;
         }
 
         .print-btn,
@@ -70,23 +70,31 @@
         }
 
         @media print {
+            body {
+                display: block !important;
+                /* quitar flex */
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+            }
+
+            .page {
+                width: 210mm;
+                min-height: auto;
+                box-shadow: none;
+                border-radius: 0;
+                margin: 0;
+                padding: 20mm 18mm;
+                page-break-after: always;
+            }
+
+            .page:last-child {
+                page-break-after: auto;
+            }
 
             .print-btn,
             .back-btn {
                 display: none !important;
-            }
-
-            body {
-                background: white;
-                padding: 0;
-            }
-
-            .page {
-                box-shadow: none;
-                margin: 0;
-                border-radius: 0;
-                width: 100%;
-                padding: 0;
             }
         }
 
@@ -304,7 +312,6 @@
                 </div>
                 <div class="meta">
                     <span>Acta</span><strong># {{ $liquidacion->id ?? '—' }}</strong>
-
                 </div>
             </div>
 
@@ -360,7 +367,7 @@
                         <tr>
                             <td class="label">Representante</td>
                             <td class="value">
-                                {{ $liquidacion->lastEditor->name }} </td>
+                                {{ $liquidacion?->lastEditor?->name ?? $liquidacion?->user?->name }} </td>
                         </tr>
                         <tr>
                             <td class="label">Domicilio</td>
@@ -410,7 +417,7 @@
 
             {{-- OBSERVACIONES --}}
             <div class="section-title">Observaciones</div>
-            @php $obsText = trim($recepcion->observacion ?? ''); @endphp
+            @php $obsText = trim($liquidacion->comentario ?? ''); @endphp
             <div class="obs">{!! $obsText === '' ? 'Sin observaciones.' : nl2br(e($obsText)) !!}</div>
 
             {{-- PIE Y FIRMAS --}}
@@ -429,7 +436,7 @@
                     <div class="sign">
                         <div class="line">LIQUIDADOR</div>
                         <div class="mini">
-                            {{ $liquidacion->lastEditor->name }}
+                            {{ $liquidacion?->lastEditor?->name ?? $liquidacion?->user?->name }} </td>
                         </div>
                     </div>
                     {{-- <div class="signs">

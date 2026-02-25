@@ -207,6 +207,11 @@
                                             data-bs-target="#modalRanking">
                                             📊 Ver Ranking
                                         </button>
+
+                                        <a href="{{ route('liquidaciones.acta.all') }}" target="_blank"
+                                            class="btn btn-secondary">
+                                            🖨️ Imprimir Todas las Actas
+                                        </a>
                                     </div>
                                 </div>
                             </div>

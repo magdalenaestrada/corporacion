@@ -85,6 +85,8 @@ Route::group(['middleware' => ['auth']], function () {
     // Ejemplo de ruta para almacenar el resumen
     Route::post('/resumens', [ResumenController::class, 'store'])->name('resumens.store');
     //Ruta para imprimir
+    Route::get('liquidaciones/acta/all', [LiquidacionController::class, 'print_acta_all'])
+        ->name('liquidaciones.acta.all');
     Route::get('/liquidaciones/{id}/print', [LiquidacionController::class, 'print'])->name('liquidaciones.print');
     Route::get('/liquidaciones/{id}/print-acta', [LiquidacionController::class, 'print_acta'])->name('liquidaciones.print-acta');
     Route::post('/duplicate/{id}', [LiquidacionController::class, 'duplicate'])->name('duplicate');
@@ -151,14 +153,15 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/recepciones-ingreso/{nro_salida}/acta', [RecepcionIngresoController::class, 'actaHtml'])->name('recepciones-ingreso.acta.html');
 
     Route::resource('estados_mineral', EstadoMineralController::class);
-    
+
     Route::get('humedad/{id}/informe', [HumedadController::class, 'informe'])
-    ->name('humedad.informe');
+        ->name('humedad.informe');
     Route::get('/humedad/export', [HumedadController::class, 'export'])->name('humedad.export');
 
-    Route::get('humedad/pesos/buscar',
-     [HumedadController::class, 'buscarPesos'])->name('humedad.pesos.buscar');
-         
+    Route::get(
+        'humedad/pesos/buscar',
+        [HumedadController::class, 'buscarPesos']
+    )->name('humedad.pesos.buscar');
 });
 
 

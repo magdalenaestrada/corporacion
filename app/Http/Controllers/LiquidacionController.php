@@ -575,4 +575,15 @@ class LiquidacionController extends Controller
 
         return view('liquidaciones.acta', compact('liquidacion'));
     }
+
+    public function print_acta_all()
+    {
+        $liquidaciones = Liquidacion::with(['muestra', 'cliente', 'facturas', 'ingreso', 'user'])
+            ->where("igv2", "18")
+            ->where("estado", "CIERRE")
+            ->orderBy("cliente_id", "asc")
+            ->get();
+
+        return view('liquidaciones.todas', compact('liquidaciones'));
+    }
 }

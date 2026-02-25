@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <title>Actas — Todos los registros</title>
+
+    <style>
+        :root {
+            --ink: #111827;
+            --muted: #6b7280;
+            --line: #d1d5db;
+            --head: {{ $primaryColor ?? '#0f172a' }};
+            --chip: #f3f4f6;
+            --bg: #f1f5f9;
+        }
+
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            /* 👈 esto es todo lo que falta */
+            align-items: center;
+            padding: 40px 0;
+            margin: 0;
+            color: var(--ink);
+            font-size: 11.5px;
+            line-height: 1.42;
+        }
+
+        .page {
+            background: white;
+            width: 210mm;
+            /* eliminar min-height: 297mm; */
+            padding: 20mm 18mm;
+            margin-bottom: 10mm;
+            /* separación entre páginas */
+        }
+
+        .print-btn,
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            background: #0f172a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, .2);
+            transition: background 0.2s;
+            z-index: 1000;
+        }
+
+        .print-btn:hover,
+        .back-btn:hover {
+            background: #1e293b;
+        }
+
+        .print-btn {
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .back-btn {
+            left: 20px;
+        }
+
+        /* Márgenes y detalles de la hoja */
+        .head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+        }
+
+        .brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-logo {
+            height: 38px;
+            object-fit: contain;
+        }
+
+        .brand {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--head);
+        }
+
+        .sub {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .meta {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            font-size: 10.5px;
+            color: var(--muted);
+            background: var(--chip);
+            padding: 5px 7px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+        }
+
+        .title {
+            text-align: center;
+            margin: 10px 0 12px 0;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .15px;
+            font-size: 13px;
+        }
+
+        .section-title {
+            font-weight: 700;
+            text-transform: uppercase;
+            margin: 12px 0 5px 0;
+            border-left: 3px solid var(--head);
+            padding-left: 6px;
+            font-size: 11.8px;
+        }
+
+        .box {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 8px;
+            background: #fff;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .kv {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .kv tr+tr td {
+            border-top: 1px dashed var(--line);
+        }
+
+        .kv td {
+            padding: 3px 5px;
+            vertical-align: top;
+        }
+
+        .kv .label {
+            width: 35%;
+            color: #111;
+            font-weight: 600;
+        }
+
+        .kv .value {
+            width: 65%;
+        }
+
+        p {
+            margin: 5px 0;
+            text-align: justify;
+        }
+
+        ul {
+            margin: 5px 0 0 18px;
+            padding: 0;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .obs {
+            border: 1px dashed var(--line);
+            border-radius: 6px;
+            padding: 6px 8px;
+        }
+
+        .signs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 14px;
+        }
+
+        .sign {
+            text-align: center;
+            padding-top: 25px;
+        }
+
+        .sign .line {
+            margin-top: 35px;
+            border-top: 1px solid #000;
+            padding-top: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .mini {
+            font-size: 10.5px;
+        }
+
+        .chip {
+            display: inline-block;
+            background: var(--chip);
+            border: 1px solid var(--line);
+            padding: 2px 6px;
+            border-radius: 999px;
+            font-size: 10px;
+        }
+
+        .back-btn {
+            left: 20px;
+        }
+
+        .partes .box {
+            padding: 7px;
+        }
+
+        .partes .kv td {
+            padding: 2px 4px;
+            font-size: 10.5px;
+        }
+
+        .partes .chip {
+            font-size: 9.5px;
+            padding: 1px 6px;
+        }
+
+        .partes.grid-2 {
+            gap: 6px;
+        }
+
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.05;
+            width: 460px;
+            z-index: -1;
+        }
+
+        @media print {
+
+            .page {
+                page-break-after: always;
+                /* solo después de cada página real */
+            }
+
+            .page:last-child {
+                page-break-after: auto;
+                /* evitar página extra al final */
+            }
+
+            .print-btn,
+            .back-btn {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <button class="back-btn" onclick="window.location.href='{{ route('pesos.index') }}'">⬅️ Volver</button>
+    <button class="print-btn" onclick="window.print()">🖨️ Imprimir Todas las Actas
+        ({{ $liquidaciones->count() }})</button>
+
+    @foreach ($liquidaciones as $liquidacion)
+        <div class="page page-break">
+            @php
+                $logoUrl = $logoUrl ?? asset('images/innovalogo.png');
+            @endphp
+
+            @if (!empty($logoUrl))
+                <img src="{{ $logoUrl }}" class="watermark" alt="Marca de agua">
+            @endif
+
+            <div class="doc">
+
+                {{-- ENCABEZADO --}}
+                <div class="head">
+                    <div class="brand-wrap">
+                        @if (!empty($logoUrl))
+                            <img src="{{ $logoUrl }}" alt="Logo" class="brand-logo">
+                        @endif
+                        <div>
+                            <div class="brand">INNOVA CORPORATIVO S.A.</div>
+                            <div class="sub">RUC: 20613318021</div>
+                        </div>
+                    </div>
+                    <div class="meta">
+                        <span>Acta</span><strong># {{ $liquidacion->id ?? '—' }}</strong>
+                    </div>
+                </div>
+
+                <div class="title">ACTA DE ENTREGA DE CONCENTRADOS</div>
+
+                {{-- Intro --}}
+                <div class="box" style="margin-bottom:10px;">
+                    <p>En la localidad de <b>Nasca</b>, siendo las <b>{{ $liquidacion->created_at->format('H:i') }}</b>
+                        horas
+                        del día
+                        <b>{{ $liquidacion->created_at->format('d') }}</b> de
+                        <b>{{ ucfirst($liquidacion->created_at->translatedFormat('F')) }}</b> del
+                        <b>{{ $liquidacion->created_at->format('Y') }}</b>, se extiende la presente
+                        <b>ACTA DE ENTREGA DE CONCENTRADOS</b>, con la finalidad de dejar constancia
+                        de la entrega,
+                        traslado, recepción y verificación del concentrado, de acuerdo con la normativa vigente que
+                        regula
+                        su
+                        comercialización y transporte.
+                    </p>
+
+                </div>
+
+                {{-- I. PARTES INTERVINIENTES --}}
+                <div class="section-title">I. Partes intervinientes</div>
+                <div class="grid-2 partes">
+                    {{-- Entregante --}}
+                    <div class="box">
+                        <div class="chip" style="margin-bottom:4px;">Empresa Entregante</div>
+                        <table class="kv">
+                            <tr>
+                                <td class="label">RAZON SOCIAL</td>
+                                <td class="value">{{ $liquidacion->cliente->razon_social ?: '—' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">RUC</td>
+                                <td class="value">{{ $liquidacion->cliente->ruc_empresa ?: '—' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    {{-- Receptora --}}
+                    <div class="box">
+                        <div class="chip" style="margin-bottom:4px;">Empresa Receptora</div>
+                        <table class="kv">
+                            <tr>
+                                <td class="label">Razón social</td>
+                                <td class="value">INNOVA CORPORATIVO S.A.</td>
+                            </tr>
+                            <tr>
+                                <td class="label">RUC</td>
+                                <td class="value">20613318021</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Representante</td>
+                                <td class="value">
+                                    {{ $liquidacion?->lastEditor?->name ?? $liquidacion?->user?->name }} </td>
+                            </tr>
+                            <tr>
+                                <td class="label">Domicilio</td>
+                                <td class="value">Carretera Pampa de Chauchilla km 1, Fundo Santa Cirila, Ica - Nasca
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                {{-- II. OBJETO --}}
+
+                {{-- III. CONDICIONES --}}
+                <div class="section-title">II. Condiciones de entrega</div>
+                <div class="box">
+                    <p>1. La entrega del concentrado con origen de
+                        <b>{{ $liquidacion?->ingreso?->procedencia ?: '—' }}</b> ,
+                        se realizó en el
+                        punto de recepción ubicado en:
+                        <b>Carretera Pampa de Chauchilla km 1, Fundo Santa Cirila, Ica - Nasca.</b>
+                    </p>
+
+                    <p>2. La empresa remitente <b>{{ $liquidacion->cliente->razon_social ?: '—' }} </b> con RUC
+                        <b>{{ $liquidacion->cliente->ruc_empresa ?: '—' }}</b> realizó la entrega física del
+                        concentrado.
+                    </p>
+
+                    <p>3. El lote fue ingresado el dia <b>{{ $liquidacion->fechai }} </b> con los siguientes datos:
+                    <ul>
+                        <li>Ticket de balanza — N.º <b>{{ $liquidacion->ingreso->NroSalida ?? '—' }};</b></li>
+                        <li> Peso total:
+                            <b>{{ $liquidacion->ingreso->peso_total ?? '—' }},</b>
+                        </li>
+                        <li>Guia de transporte: {{ $liquidacion->ingreso->guia_transporte ?? '-' }}</li>
+                        <li>Guia de remision: {{ $liquidacion->ingreso->guia_remision ?? '-' }}</li>
+                    </ul>
+                    </p>
+                </div>
+
+                {{-- DOCUMENTOS --}}
+                <div class="section-title">Documentos que se adjuntan al acta</div>
+                <div class="box">
+                    <ul>
+                        <li>Guías de Remisión – Remitente y Transportista.</li>
+                        <li>Ticket de Balanza.</li>
+                        <li>Informes de Ensayo de Laboratorio y Liquidación de Compra.</li>
+                    </ul>
+                </div>
+
+                {{-- OBSERVACIONES --}}
+                <div class="section-title">Observaciones</div>
+                @php $obsText = trim($liquidacion->comentario ?? ''); @endphp
+                <div class="obs">{!! $obsText === '' ? 'Sin observaciones.' : nl2br(e($obsText)) !!}</div>
+
+                {{-- PIE Y FIRMAS --}}
+                <div class="box" style="margin-top:15px;">
+                    <p>Firmado en la ciudad de <b>Nasca</b>, a los <b>{{ $liquidacion->created_at->format('d') }}</b>
+                        días
+                        del mes de
+                        <b>{{ ucfirst($liquidacion->created_at->translatedFormat('F')) }}</b> de
+                        <b>{{ $liquidacion->created_at->format('Y') }}</b>.
+                    </p>
+                    <div class="signs">
+                        <div class="sign">
+                            <div class="line">EMPRESA REMITENTE</div>
+                            <div class="mini">{{ $liquidacion->cliente->razon_social ?: '—' }} </div>
+                            <div class="mini">{{ $liquidacion->cliente->ruc_empresa ?: '—' }} </div>
+                        </div>
+                        <div class="sign">
+                            <div class="line">LIQUIDADOR</div>
+                            <div class="mini">
+                                {{ $liquidacion?->lastEditor?->name ?? $liquidacion?->user?->name }} </td>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>{{-- .doc --}}
+        </div>{{-- .page --}}
+    @endforeach
+</body>
+
+</html>
