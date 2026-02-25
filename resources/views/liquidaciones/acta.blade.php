@@ -342,10 +342,6 @@
                             <td class="label">RUC</td>
                             <td class="value">{{ $liquidacion->cliente->ruc_empresa ?: '—' }}</td>
                         </tr>
-                        <tr>
-                            <td class="label">DIRECCIÓN</td>
-                            <td class="value">{{ $liquidacion->cliente->direccion ?: '—' }}</td>
-                        </tr>
                     </table>
                 </div>
 
@@ -364,8 +360,7 @@
                         <tr>
                             <td class="label">Liquidador</td>
                             <td class="value">
-                                {{ $liquidacion->lastEditor ? explode(' ', $liquidacion->lastEditor->name)[0] : '____________' }}
-                            </td>
+                                {{ $liquidacion->lastEditor->name }} </td>
                         </tr>
                         <tr>
                             <td class="label">Domicilio</td>
@@ -410,7 +405,6 @@
                     <li>Guías de Remisión – Remitente y Transportista.</li>
                     <li>Ticket de Balanza.</li>
                     <li>Informes de Ensayo de Laboratorio y Liquidación de Compra.</li>
-                    <li>Factura</li>
                 </ul>
             </div>
 
@@ -435,7 +429,7 @@
                     <div class="sign">
                         <div class="line">LIQUIDADOR</div>
                         <div class="mini">
-                            {{ $liquidacion->lastEditor ? explode(' ', $liquidacion->lastEditor->name)[0] : 'N/A' }}
+                            {{ $liquidacion->lastEditor->name }}
                         </div>
                     </div>
                     {{-- <div class="signs">
