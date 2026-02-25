@@ -84,6 +84,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/resumens', [ResumenController::class, 'store'])->name('resumens.store');
     //Ruta para imprimir
     Route::get('/liquidaciones/{id}/print', [LiquidacionController::class, 'print'])->name('liquidaciones.print');
+    Route::get('/liquidaciones/{id}/print-acta', [LiquidacionController::class, 'print_acta'])->name('liquidaciones.print-acta');
     Route::post('/duplicate/{id}', [LiquidacionController::class, 'duplicate'])->name('duplicate');
     Route::put('/liquidaciones/{id}', [LiquidacionController::class, 'update'])->name('liquidaciones.update');
 

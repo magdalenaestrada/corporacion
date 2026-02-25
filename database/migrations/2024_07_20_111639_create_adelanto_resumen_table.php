@@ -13,9 +13,8 @@ return new class extends Migration
     {
         Schema::create('adelanto_resumen', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('adelanto_id')->constrained()->onDelete('cascade');
-            $table->foreignId('resumen_id')->constrained()->onDelete('cascade');
-            // Puedes añadir otros campos según tus necesidades
+            $table->foreignId('adelanto_id')->constrained('adelantos')->onDelete('cascade');
+            $table->foreignId('resumen_id')->constrained('resumens')->onDelete('cascade');
             $table->timestamps();
         });
     }
