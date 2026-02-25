@@ -434,9 +434,9 @@
                     </div>
                     <div class="sign">
                         <div class="line">LIQUIDADOR</div>
-                        <div class="mini">INNOVA CORPORATIVO S.A.</div>
-                        <div class="mini">RUC: 20613318021</div>
-
+                        <div class="mini">
+                            {{ $liquidacion->lastEditor ? explode(' ', $liquidacion->lastEditor->name)[0] : 'N/A' }}
+                        </div>
                     </div>
                     {{-- <div class="signs">
     <div class="sign">
