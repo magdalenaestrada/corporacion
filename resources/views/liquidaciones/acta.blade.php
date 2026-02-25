@@ -428,14 +428,12 @@
                 </p>
                 <div class="signs">
                     <div class="sign">
-                        <div class="line">LIQUIDADOR</div>
-                        <div class="mini">
-                            {{ $liquidacion->lastEditor ? explode(' ', $liquidacion->lastEditor->name)[0] : 'N/A' }}
-                        </div>
-
+                        <div class="line">EMPRESA REMITENTE</div>
+                        <div class="mini">{{ $liquidacion->cliente->razon_social ?: '—' }} </div>
+                        <div class="mini">{{ $liquidacion->cliente->ruc_empresa ?: '—' }} </div>
                     </div>
                     <div class="sign">
-                        <div class="line">EMPRESA RECEPTORA</div>
+                        <div class="line">LIQUIDADOR</div>
                         <div class="mini">INNOVA CORPORATIVO S.A.</div>
                         <div class="mini">RUC: 20613318021</div>
 
