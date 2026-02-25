@@ -335,20 +335,12 @@
                     <div class="chip" style="margin-bottom:4px;">Empresa Entregante</div>
                     <table class="kv">
                         <tr>
-                            <td class="label">Doc. RUC</td>
+                            <td class="label">RAZON SOCIAL</td>
                             <td class="value">{{ $liquidacion->cliente->razon_social ?: '—' }}</td>
                         </tr>
                         <tr>
                             <td class="label">RUC</td>
                             <td class="value">{{ $liquidacion->cliente->ruc_empresa ?: '—' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Representante</td>
-                            <td class="value">{{ $liquidacion->cliente->datos_cliente ?: '—' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">DNI</td>
-                            <td class="value">{{ $liquidacion->cliente->documento_cliente ?: '—' }}</td>
                         </tr>
                         <tr>
                             <td class="label">DIRECCIÓN</td>
