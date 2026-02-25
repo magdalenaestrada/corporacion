@@ -30,7 +30,9 @@ use App\Http\Controllers\FinaController;
 use App\Http\Controllers\RecepcionController;
 use App\Http\Controllers\FacturaLiquidacionController;
 use App\Http\Controllers\RecepcionIngresoController;
-//Route::group(['middleware' => ['role:super-admin|admin']], function(){
+use App\Http\Controllers\HumedadController;
+use App\Http\Controllers\EstadoMineralController;
+
 Route::group(['middleware' => ['auth']], function () {
 
 
@@ -143,10 +145,20 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::get('/pesos/export/excel', [PesoController::class, 'exportExcel'])
         ->name('pesos.export.excel');
-
+    Route::resource('humedad', HumedadController::class);
 
     Route::get('pesos/{nro_salida}/recepcionar', [PesoController::class, 'recepcionar'])->name('pesos.recepcionar');
     Route::get('/recepciones-ingreso/{nro_salida}/acta', [RecepcionIngresoController::class, 'actaHtml'])->name('recepciones-ingreso.acta.html');
+
+    Route::resource('estados_mineral', EstadoMineralController::class);
+    
+    Route::get('humedad/{id}/informe', [HumedadController::class, 'informe'])
+    ->name('humedad.informe');
+    Route::get('/humedad/export', [HumedadController::class, 'export'])->name('humedad.export');
+
+    Route::get('humedad/pesos/buscar',
+     [HumedadController::class, 'buscarPesos'])->name('humedad.pesos.buscar');
+         
 });
 
 

@@ -22,14 +22,31 @@ class FinaController extends Controller
        // Pasar los datos a la vista
        return view('finas.index', compact('liquidaciones'));
    }
-   public function procesadas()
+public function procesadas()
 {
-    // Obtener las liquidaciones procesadas ordenadas de más recientes a más antiguas
-    $finas = Fina::whereNotNull('codigoBlending')
-                 ->orderBy('created_at', 'desc')
-                 ->paginate(100);
-    
-    // Devolver la vista para mostrar las liquidaciones procesadas
+    $finas = Fina::with(['liquidaciones:id,fina_id,NroSalida']) // ajusta fina_id si tu FK se llama distinto
+        ->orderByDesc('id')
+        ->paginate(perPage: 200);
+
+    // Construir tickets por fina
+    $finas->getCollection()->transform(function ($fina) {
+        $tickets = $fina->liquidaciones
+            ->pluck('NroSalida')
+            ->filter()
+            ->flatMap(function ($value) {
+                return preg_split('/[\/,\s]+/', $value);
+            })
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        // creamos una propiedad “virtual” para la vista
+        $fina->tickets_list = $tickets;
+
+        return $fina;
+    });
+
     return view('finas.procesadas', compact('finas'));
 }
 

@@ -2,12 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Peso extends Model
 {
     protected $table = 'pesos';
+
+    // ✅ CLAVE PRIMARIA REAL
+    protected $primaryKey = 'NroSalida';
+    public $incrementing = true;
+    protected $keyType = 'int';
+
+    // ❌ tu tabla no tiene timestamps
+    public $timestamps = false;
 
     protected $fillable = [
         'Horas',

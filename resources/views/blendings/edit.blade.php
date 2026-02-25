@@ -27,7 +27,7 @@
                         <label for="lista" class="text-muted">{{ __('PREPARACION BLENDING') }}</label>
                         <select name="lista" id="lista" class="form-control @error('lista') is-invalid @enderror">
                             <option value="">Seleccione tipo preparación</option>
-                            @foreach(['COBRE', 'COBRE TIPO 1', 'COBRE TIPO 2', 'PLATA', 'ORO','PLOMO','ZINC'] as $lista)
+                            @foreach([ 'COBRE TIPO 1', 'COBRE TIPO 2', 'PLATA','PLOMO','ZINC'] as $lista)
                                 <option value="{{ $lista }}" {{ (old('lista', $blending->lista) == $lista) ? 'selected' : '' }}>{{ $lista }}</option>
                             @endforeach
                         </select>

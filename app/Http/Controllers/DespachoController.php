@@ -58,7 +58,7 @@ class DespachoController extends Controller
     {
         // Validar los datos del despacho
         $request->validate([
-            'totalTMH' => 'nullable|string',
+            'totalTMH' => 'nullable',
             'masomenos' => 'nullable|string',
             'fecha' => 'nullable|date',
             'observacion' => 'nullable|string',

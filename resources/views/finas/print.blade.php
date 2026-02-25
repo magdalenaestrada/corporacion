@@ -117,8 +117,9 @@
                 <th>ID</th>
                 <th>Cliente</th>
                 <th>Nota</th>
+                <th>Nombre Lote</th>
                 <th>Referencia Lote</th>
-                <th>Ticket</th>
+                <th>Codigo</th>
                 <th>Fecha</th>
                 <th>Producto</th>
                 <th>TMH</th>
@@ -141,6 +142,7 @@
                     <td>{{ $liquidacion->id }}</td>
                     <td>{{ $liquidacion->cliente->datos_cliente }}</td>
                     <td contenteditable="true" class="editable">{{ $liquidacion->comentario }}</td>
+                    <td>{{ $liquidacion->lote }}</td>
                     <td>{{ $liquidacion->ref_lote }}</td>
                     <td>{{ $liquidacion->NroSalida }}</td>
                     <td>{{ $liquidacion->created_at->format('d-m-Y') }}</td>
